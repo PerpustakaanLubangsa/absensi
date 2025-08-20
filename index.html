@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Catat Absensi Pustakawan</title>
+    <!-- Firebase v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Font Awesome untuk ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" xintegrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0xkjrVlyo/I84xZFdnHAjsjr/SLf0R+xVvBfK+T2nFf2a/iFv8F0pG2vj+g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        :root {
+            --c1:#0d9488; /* Teal-800 */
+            --c2:#0b7a71; /* Slightly darker teal */
+            --red:#c62828; /* Red */
+            --b:#222; /* Dark text */
+            --muted:#666; /* Muted text */
+            --green:#28a745; /* Success green */
+            --orange:#fd7e14; /* Warning orange for Izin */
+            --yellow:#ffc107; /* Warning yellow for Sakit */
+            --gray:#6c757d; /* Gray for Alpha */
+            --blue: #0d6efd; /* Blue for info */
+        }
+        *{box-sizing:border-box}
+        body{font-family:Arial,Helvetica,sans-serif;margin:18px;color:var(--b); background-color: #f8fafc;}
+        .wrap{max-width:760px; margin: 20px auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); background-color: #fff;}
+        h1{margin-top:.2rem; margin-bottom: 1.5rem; text-align: center; color: var(--c1);}
+        .card{border:1px solid #ddd;border-radius:12px;padding:14px;margin:12px 0;}
+        .title{font-weight: bold; font-size: 1.1em; margin-bottom: 0.8rem; color: var(--b);}
+        .info {font-size: 0.95em; color: var(--muted); text-align: center; margin-top: 5px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;}
+
+        .librarian-list { display: flex; flex-direction: column; gap: 12px; }
+        .librarian-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 10px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fdfdfd;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: border-color 0.3s ease; /* Smooth transition for border */
+        }
+        .librarian-item.recorded-hadir { border-color: var(--green); }
+        .librarian-item.recorded-izin { border-color: var(--orange); }
+        .librarian-item.recorded-sakit { border-color: var(--yellow); }
+        .librarian-item.recorded-alpha { border-color: var(--red); }
+
+
+        .librarian-info { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+        .librarian-name { font-weight: bold; font-size: 1.2em; color: var(--c1); margin-right: 10px; }
+        .status-display {
+            font-size: 1.1em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: auto; /* Push to right */
+        }
+        .status-display.hadir { color: var(--green); }
+        .status-display.izin { color: var(--orange); }
+        .status-display.sakit { color: var(--yellow); }
+        .status-display.alpha { color: var(--red); }
+        .status-display i { margin-right: 5px; }
+
+
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-end; /* Align buttons to the right */
+        }
+        .action-buttons button {
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-weight: bold;
+            color: #fff;
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.1s ease;
+            flex: 1 1 auto; /* Allow buttons to grow and shrink */
+            min-width: 80px; /* Minimum width for buttons */
+            position: relative; /* For active indicator */
+            overflow: hidden; /* For active indicator */
+        }
+        .action-buttons button:active {
+            transform: translateY(1px);
+            box-shadow: none;
+        }
+
+        .btn-hadir { background-color: var(--green); }
+        .btn-hadir:hover { background-color: #218838; }
+        .btn-izin { background-color: var(--orange); }
+        .btn-izin:hover { background-color: #e06800; }
+        .btn-sakit { background-color: var(--yellow); color: var(--b); } /* Darker text for yellow */
+        .btn-sakit:hover { background-color: #e0a800; }
+        .btn-alpha { background-color: var(--gray); }
+        .btn-alpha:hover { background-color: #5a6268; }
+
+        /* Styles for the "active" button indicating current status */
+        .action-buttons button.active {
+            border: 2px solid var(--blue); /* Highlight with blue border */
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+            transform: scale(1.05); /* Slightly enlarge */
+            z-index: 1; /* Bring to front */
+        }
+        /* Specific active colors override default button colors */
+        .action-buttons button.active.btn-hadir { background-color: #198754; } /* Darker green */
+        .action-buttons button.active.btn-izin { background-color: #dc3545; } /* Darker red (alternative for izin active) */
+        .action-buttons button.active.btn-sakit { background-color: #ffc107; } /* Same yellow for active, maybe darker border */
+        .action-buttons button.active.btn-alpha { background-color: #343a40; } /* Darker gray */
+
+
+        .msg {margin-top: 10px; padding: 10px; border-radius: 8px; font-weight: bold; text-align: center;}
+        .msg.success {background-color: #d4edda; color: #155724; border-color: #c3e6cb;}
+        .msg.error {background-color: #f8d7da; color: #721c24; border-color: #f5c6cb;}
+        .msg.info {background-color: #e2e3e5; color: #383d41; border-color: #d6d8db;}
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 640px) {
+            .librarian-item { padding: 10px; }
+            .librarian-info { flex-direction: column; align-items: flex-start; gap: 5px;}
+            .librarian-name { width: 100%; margin-right: 0; }
+            .status-display { margin-left: 0; margin-top: 5px; width: 100%; justify-content: flex-start; }
+            .action-buttons { justify-content: stretch; }
+            .action-buttons button { width: 100%; flex: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h1>Absensi Pustakawan</h1>
+        <div class="card">
+            <div id="currentDateTime" class="info">Memuat Tanggal & Shift...</div>
+            <div id="librarianList" class="librarian-list">
+                <div class="msg info">Memuat jadwal dan status absensi...</div>
+            </div>
+            <div id="noActiveShiftMsg" class="msg info hidden"></div>
+            <div id="globalMsg" class="msg hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        // ========= Firebase (v8) =========
+        const firebaseConfig = {
+            apiKey: "AIzaSyBb-hbcc_ZE2hH6dlc81HbIGMQi96y4qYI",
+            authDomain: "absensi-7ef83.firebaseapp.com",
+            databaseURL: "https://absensi-7ef83-default-rtdb.firebaseio.com",
+            projectId: "absensi-7ef83",
+            storageBucket: "absensi-7ef83.appspot.com",
+            messagingSenderId: "661765044421",
+            appId: "1:661765044421:web:b8578a195a6d208dc4d8ac"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ========= Elemen DOM =========
+        const currentDateTimeDisplay = document.getElementById('currentDateTime');
+        const librarianListContainer = document.getElementById('librarianList');
+        const noActiveShiftMsg = document.getElementById('noActiveShiftMsg');
+        const globalMsg = document.getElementById('globalMsg');
+
+        // Map id → nama (diisi realtime)
+        let NAME_MAP = {};
+
+        // ========= Fungsi Utility =========
+        const HARI_MAP = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
+        const TitleCase = s => s.charAt(0).toUpperCase() + s.slice(1);
+        const getFormattedDate = (dateObj) => {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return dateObj.toLocaleDateString('id-ID', options);
+        };
+        const getFormattedTime = (timestamp) => {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        };
+
+        function showGlobalMessage(message, type) {
+            globalMsg.textContent = message;
+            globalMsg.className = `msg ${type}`;
+            globalMsg.classList.remove('hidden');
+            setTimeout(() => {
+                globalMsg.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Fungsi untuk mendapatkan hari, shift, dan tanggal saat ini
+        function getCurrentDayShiftAndDate() {
+            const now = new Date();
+            const dayOfWeek = HARI_MAP[now.getDay()]; // 0=Minggu, 1=Senin...
+            const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+            const hour = now.getHours();
+            const minute = now.getMinutes();
+
+            let shift = null;
+            let shiftDisplay = 'Di luar jam shift absensi'; // Default message
+            let isActive = false; // Flag to indicate if we are within an active shift window
+            let shiftEndTime = null; // To store the end time of the active shift
+
+            // Shift Siang: 07:30 - 11:00
+            const siangStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7, 30, 0);
+            const siangEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 11, 0, 0);
+
+            // Shift Malam: 20:30 - 22:30
+            const malamStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 20, 30, 0);
+            const malamEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 22, 30, 0);
+
+            if (now >= siangStart && now < siangEnd) {
+                shift = 'siang';
+                shiftDisplay = 'Shift Siang (07:30 – 11:00)';
+                isActive = true;
+                shiftEndTime = siangEnd;
+            } else if (now >= malamStart && now < malamEnd) {
+                shift = 'malam';
+                shiftDisplay = 'Shift Malam (20:30 – 22:30)';
+                isActive = true;
+                shiftEndTime = malamEnd;
+            }
+
+            currentDateTimeDisplay.textContent = `${getFormattedDate(now)} | ${shiftDisplay}`;
+
+            return { day: dayOfWeek, shift: shift, currentDate: currentDate, isActiveShift: isActive, shiftEndTime: shiftEndTime };
+        }
+
+        // Fungsi untuk mencatat absensi
+        async function recordAttendance(librarianId, shift, status) {
+            const { currentDate } = getCurrentDayShiftAndDate();
+            if (!currentDate) {
+                showGlobalMessage('Gagal mencatat: Tanggal tidak terdeteksi.', 'error');
+                return;
+            }
+
+            try {
+                const attendancePath = `absensi/${currentDate}/${librarianId}/${shift}`;
+                await db.ref(attendancePath).set({
+                    status: status,
+                    time: Date.now() // Record timestamp of attendance
+                });
+                showGlobalMessage(`Absensi ${NAME_MAP[librarianId]} (${TitleCase(status)}) berhasil dicatat.`, 'success');
+                // Re-render to update UI immediately
+                renderLibrarians();
+            } catch (e) {
+                showGlobalMessage('Gagal mencatat absensi: ' + e.message, 'error');
+                console.error("Attendance recording failed:", e);
+            }
+        }
+
+        // Fungsi untuk menampilkan daftar pustakawan dan tombol absensi
+        async function renderLibrarians() {
+            // Clear only messages, not the list, to prevent flickering initially
+            globalMsg.classList.add('hidden');
+            noActiveShiftMsg.classList.add('hidden');
+
+            const { day, shift, currentDate, isActiveShift, shiftEndTime } = getCurrentDayShiftAndDate();
+
+            if (!isActiveShift) {
+                librarianListContainer.innerHTML = ''; // Clear list if no active shift
+                noActiveShiftMsg.textContent = `Saat ini di luar jam shift absensi atau shift telah berakhir. Jadwal untuk hari ${TitleCase(day)} belum/sudah selesai.`;
+                noActiveShiftMsg.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                // 1. Ambil daftar pustakawan (NAME_MAP)
+                const pustakawanSnap = await db.ref('pustakawan').once('value');
+                NAME_MAP = {};
+                pustakawanSnap.forEach(ch => {
+                    NAME_MAP[ch.key] = ch.val()?.nama || '(tanpa nama)';
+                });
+
+                // 2. Ambil jadwal untuk hari dan shift saat ini
+                const jadwalSnap = await db.ref(`jadwal/${day}/${shift}`).once('value');
+                const scheduledLibrariansIds = jadwalSnap.exists() ? Object.keys(jadwalSnap.val()) : [];
+
+                // 3. Ambil catatan absensi untuk tanggal dan shift saat ini
+                const attendanceSnap = await db.ref(`absensi/${currentDate}`).once('value');
+                const dailyAttendance = attendanceSnap.val() || {};
+
+                if (scheduledLibrariansIds.length === 0) {
+                    librarianListContainer.innerHTML = ''; // Clear list if no scheduled librarians
+                    noActiveShiftMsg.textContent = `Tidak ada pustakawan yang dijadwalkan untuk hari ${TitleCase(day)} Shift ${shift === 'siang' ? 'Siang' : 'Malam'}.`;
+                    noActiveShiftMsg.classList.remove('hidden');
+                    return;
+                } else {
+                    noActiveShiftMsg.classList.add('hidden'); // Hide info message if there are librarians
+                }
+
+                // Get current visible librarian IDs in DOM
+                const currentDomLibrarianElements = Array.from(librarianListContainer.children);
+                const currentDomLibrarianIds = new Set(currentDomLibrarianElements.map(el => el.dataset.id));
+                const scheduledIdsSet = new Set(scheduledLibrariansIds);
+
+                // Remove librarians no longer scheduled or no longer active for the current shift
+                currentDomLibrarianElements.forEach(el => {
+                    const id = el.dataset.id;
+                    if (!scheduledIdsSet.has(id)) {
+                        el.remove();
+                    }
+                });
+
+                // Add or update librarians who should be displayed
+                const sortedLibrariansIds = scheduledLibrariansIds.sort((a, b) => {
+                    const nameA = NAME_MAP[a] || '';
+                    const nameB = NAME_MAP[b] || '';
+                    return nameA.localeCompare(nameB);
+                });
+
+                sortedLibrariansIds.forEach(id => {
+                    const nama = NAME_MAP[id];
+                    if (!nama) return; // Skip if name not found
+
+                    let item = document.querySelector(`.librarian-item[data-id="${id}"]`);
+
+                    if (!item) {
+                        // Create new item if it doesn't exist
+                        item = document.createElement('div');
+                        item.className = 'librarian-item';
+                        item.dataset.id = id; // Store ID on the element
+                        librarianListContainer.appendChild(item); // Append to list
+                    }
+
+                    // Update content of existing or new item
+                    const librarianRecord = dailyAttendance[id] || {};
+                    const currentShiftRecord = librarianRecord[shift];
+                    const isRecorded = !!currentShiftRecord;
+                    const recordedStatus = isRecorded ? currentShiftRecord.status : null;
+                    const recordedTime = isRecorded ? currentShiftRecord.time : null;
+
+                    item.innerHTML = `
+                        <div class="librarian-info">
+                            <span class="librarian-name">${nama}</span>
+                            <span class="status-display ${recordedStatus || ''}">
+                                ${isRecorded ? `<i class="${getIconClass(recordedStatus)}"></i> ${TitleCase(recordedStatus)} ${getFormattedTime(recordedTime)}` : ''}
+                            </span>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn-hadir" data-status-value="hadir"><i class="fas fa-user-check"></i> Hadir</button>
+                            <button class="btn-izin" data-status-value="izin"><i class="fas fa-sticky-note"></i> Izin</button>
+                            <button class="btn-sakit" data-status-value="sakit"><i class="fas fa-bed"></i> Sakit</button>
+                            <button class="btn-alpha" data-status-value="alpha"><i class="fas fa-user-times"></i> Alpha</button>
+                        </div>
+                    `;
+
+                    // Add event listeners and active class after setting innerHTML
+                    const buttons = item.querySelectorAll('.action-buttons button');
+                    buttons.forEach(button => {
+                        const statusValue = button.dataset.statusValue;
+                        button.onclick = () => recordAttendance(id, shift, statusValue);
+
+                        // Set active class if this button matches the recorded status
+                        if (isRecorded && recordedStatus === statusValue) {
+                            button.classList.add('active');
+                            item.classList.add(`recorded-${recordedStatus}`); // Add class to parent for border
+                        } else {
+                            button.classList.remove('active');
+                        }
+                    });
+                });
+
+            } catch (error) {
+                console.error("Gagal memuat jadwal atau absensi:", error);
+                librarianListContainer.innerHTML = '<div class="msg error">Gagal memuat jadwal. Mohon coba lagi nanti.</div>';
+                noActiveShiftMsg.classList.add('hidden');
+            }
+        }
+
+        function getIconClass(status) {
+            switch (status) {
+                case 'hadir': return 'fas fa-check-circle';
+                case 'izin': return 'fas fa-file-alt';
+                case 'sakit': return 'fas fa-procedures';
+                case 'alpha': return 'fas fa-times-circle';
+                default: return '';
+            }
+        }
+
+        // Jalankan saat halaman dimuat dan perbarui secara berkala
+        document.addEventListener('DOMContentLoaded', () => {
+            renderLibrarians();
+            // Perbarui setiap 5 detik untuk memeriksa perubahan shift, jadwal, atau status absensi
+            setInterval(renderLibrarians, 5 * 1000);
+
+            // Periksa dan sembunyikan daftar jika shift berakhir
+            setInterval(() => {
+                const { isActiveShift, shiftEndTime } = getCurrentDayShiftAndDate();
+                if (!isActiveShift && shiftEndTime && new Date() >= shiftEndTime) {
+                    // If shift has truly ended, clear list and show message
+                    librarianListContainer.innerHTML = '';
+                    noActiveShiftMsg.textContent = `Shift telah berakhir pada ${getFormattedTime(shiftEndTime.getTime())}.`;
+                    noActiveShiftMsg.classList.remove('hidden');
+                } else if (isActiveShift && librarianListContainer.innerHTML === '') {
+                    // If suddenly active and list is empty, re-render to fetch content
+                    renderLibrarians();
+                }
+            }, 1000); // Check every second for shift ending
+        });
+    </script>
+</body>
+</html>
