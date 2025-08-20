@@ -1,1067 +1,732 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Panel Admin Absensi Pustakawan</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-            },
-            colors: {
-              teal: {
-                50: '#f0fdfa',
-                100: '#ccfbf1',
-                200: '#99f6e4',
-                300: '#5eead4',
-                400: '#2dd4bf',
-                500: '#14b8a6',
-                600: '#0d9488',
-                700: '#0f766e',
-                800: '#115e59',
-                900: '#134e4a',
-              },
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panel Admin Absensi Pustakawan</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            teal: {
+              50: '#f0fdfa',100: '#ccfbf1',200: '#99f6e4',300: '#5eead4',
+              400: '#2dd4bf',500: '#14b8a6',600: '#0d9488',700: '#0f766e',
+              800: '#115e59',900: '#134e4a'
             }
           }
         }
       }
-    </script>
-    <!-- React & ReactDOM CDN (development versions for simplicity) -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <!-- Babel for JSX transformation in browser -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Firebase CDN -->
-    <!-- Memuat Firebase versi compat (v8) -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    }
+  </script>
+
+  <!-- Lucide icons (static font) -->
+  <link href="https://unpkg.com/lucide-static/font/lucide.css" rel="stylesheet">
+
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+  <style>
+    /* kecilkan scrollbar tabel agar rapi */
+    ::-webkit-scrollbar { height:8px; width:8px; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 8px; }
+  </style>
 </head>
-<body class="font-sans bg-gray-50">
-    <div id="root"></div>
+<body class="font-sans bg-gray-50 text-gray-800">
+  <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
-        // Inisialisasi aplikasi Firebase dari objek global
-        const initializeApp = firebase.initializeApp;
+  <script type="text/babel">
+  const { useState, useEffect, useRef } = React;
 
-        // Komponen Modal Kustom
-        const Modal = ({ show, title, message, onConfirm, onCancel, type }) => {
-          if (!show) return null;
+  // ----------------------
+  // Modal (tetap seperti semula, sedikit styling)
+  // ----------------------
+  const Modal = ({ show, title, message, onConfirm, onCancel, type }) => {
+    if (!show) return null;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-lg font-semibold mb-3">{title}</h3>
+          <p className="text-sm text-gray-600 mb-6">{message}</p>
+          <div className="flex justify-end gap-3">
+            {type === 'confirm' && (
+              <button onClick={onCancel} className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200">Batal</button>
+            )}
+            <button onClick={onConfirm} className="px-4 py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700">
+              {type === 'confirm' ? 'Ya, Lanjutkan' : 'OK'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
-          return (
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-                <h3 className="text-xl font-bold mb-4">{title}</h3>
-                <p className="text-gray-700 mb-6">{message}</p>
-                <div className="flex justify-end space-x-3">
-                  {type === 'confirm' && (
-                    <button
-                      onClick={onCancel}
-                      className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
-                    >
-                      Batal
-                    </button>
-                  )}
-                  <button
-                    onClick={onConfirm}
-                    className={`px-4 py-2 rounded-lg text-white transition-colors ${
-                      type === 'confirm' ? 'bg-teal-600 hover:bg-teal-700' : 'bg-teal-600 hover:bg-teal-700'
-                    }`}
-                  >
-                    {type === 'confirm' ? 'Ya, Hapus' : 'OK'}
-                  </button>
+  // ----------------------
+  // Utilities (sama seperti Anda)
+  // ----------------------
+  const HARI_ORDER = ['minggu','senin','selasa','rabu','kamis','jumat','sabtu'];
+  const TitleCase = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+  const getFormattedTime = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  };
+  const getFormattedDate = (dateString) => {
+    const date = new Date(dateString);
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return isNaN(date) ? dateString : date.toLocaleDateString('id-ID', options);
+  };
+  const getMonthName = (monthNum) => {
+    const monthNames = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    return monthNames[parseInt(monthNum,10)-1] || monthNum;
+  };
+
+  // ----------------------
+  // Komponen UI kecil (Card, Empty)
+  // ----------------------
+  const Card = ({ title, children, className = '' }) => (
+    <div className={`bg-white rounded-xl shadow-sm border border-gray-100 p-5 ${className}`}>
+      {title && <h3 className="text-lg font-semibold mb-3">{title}</h3>}
+      {children}
+    </div>
+  );
+
+  const Empty = ({ text }) => (
+    <div className="text-center text-gray-500 py-6">{text}</div>
+  );
+
+  // ----------------------
+  // Komponen halaman (menjaga logika Anda)
+  // ----------------------
+  const Dashboard = ({ librarians, totalAttendanceStats }) => {
+    const totalPustakawan = librarians.length;
+    // ringkasan kecil
+    const hadirTotal = Object.values(totalAttendanceStats || {}).reduce((s, x) => s + (x.hadir || 0), 0);
+    const izinTotal = Object.values(totalAttendanceStats || {}).reduce((s, x) => s + (x.izin || 0), 0);
+    const sakitTotal = Object.values(totalAttendanceStats || {}).reduce((s, x) => s + (x.sakit || 0), 0);
+    const alphaTotal = Object.values(totalAttendanceStats || {}).reduce((s, x) => s + (x.alpha || 0), 0);
+
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card>
+            <div className="text-sm text-gray-500">Total Pustakawan</div>
+            <div className="text-2xl font-bold">{totalPustakawan}</div>
+          </Card>
+          <Card>
+            <div className="text-sm text-gray-500">Hadir (total)</div>
+            <div className="text-2xl font-bold">{hadirTotal}</div>
+          </Card>
+          <Card>
+            <div className="text-sm text-gray-500">Izin / Sakit / Alpha</div>
+            <div className="text-lg font-semibold">{izinTotal} / {sakitTotal} / {alphaTotal}</div>
+          </Card>
+        </div>
+
+        <Card title="Pustakawan Teratas">
+          {librarians.length === 0 ? <Empty text="Belum ada pustakawan." /> : (
+            <ul className="space-y-2">
+              {librarians.slice(0,6).map(l => (
+                <li key={l.id} className="flex justify-between items-center">
+                  <div className="font-medium">{l.nama}</div>
+                  <div className="text-xs text-gray-500">{l.id}</div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
+    );
+  };
+
+  const LibrarianManagement = ({ librarians, handleAddLibrarian, handleDeleteLibrarian, newLibrarianName, setNewLibrarianName }) => (
+    <div className="space-y-4">
+      <Card title="Tambah Pustakawan">
+        <div className="flex gap-3">
+          <input
+            type="text"
+            placeholder="Nama pustakawan"
+            className="flex-grow p-3 border rounded-lg focus:ring-2 focus:ring-teal-500"
+            value={newLibrarianName}
+            onChange={e => setNewLibrarianName(e.target.value)}
+            onKeyPress={e => e.key === 'Enter' && handleAddLibrarian()}
+          />
+          <button onClick={handleAddLibrarian} className="px-4 py-3 rounded-lg bg-teal-600 text-white font-medium">Tambah</button>
+        </div>
+        <div className="text-sm text-gray-500 mt-2">Nama akan disimpan dengan ID otomatis di database.</div>
+      </Card>
+
+      <Card title="Daftar Pustakawan">
+        {librarians.length === 0 ? <Empty text="Belum ada pustakawan." /> : (
+          <div className="divide-y divide-gray-100">
+            {librarians.map(l => (
+              <div key={l.id} className="flex items-center justify-between py-3">
+                <div>
+                  <div className="font-medium">{l.nama}</div>
+                  <div className="text-xs text-gray-400">{l.id}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => navigator.clipboard?.writeText(l.id)} className="text-sm px-3 py-1 border rounded">Copy ID</button>
+                  <button onClick={() => handleDeleteLibrarian(l.id, l.nama)} className="text-sm px-3 py-1 rounded bg-red-600 text-white">Hapus</button>
                 </div>
               </div>
-            </div>
-          );
-        };
-
-        // Konstanta dan Fungsi Utilitas
-        const HARI_ORDER = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
-        const TitleCase = s => s.charAt(0).toUpperCase() + s.slice(1);
-        const getFormattedTime = (timestamp) => {
-            if (!timestamp) return '';
-            const date = new Date(timestamp);
-            return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-        };
-        const getFormattedDate = (dateString) => {
-            const date = new Date(dateString);
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            return date.toLocaleDateString('id-ID', options);
-        };
-        const getMonthName = (monthNum) => {
-            const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni",
-                                "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-            return monthNames[parseInt(monthNum) - 1];
-        };
-
-        // ====================================================================
-        // Komponen Halaman Individu
-        // ====================================================================
-
-        const Dashboard = () => (
-            <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-700 mb-4">Selamat Datang di Panel Admin</h2>
-                <p className="text-gray-600">Gunakan menu di atas untuk mengelola pustakawan, mengatur jadwal, melihat laporan absensi, atau mengubah pengaturan.</p>
-                <p className="text-gray-500 text-sm mt-4">
-                  Ini adalah pusat kontrol Anda untuk sistem absensi pustakawan. Pastikan Anda masuk sebagai administrator untuk mengakses semua fitur.
-                </p>
-            </div>
-        );
-
-        const LibrarianManagement = ({ librarians, handleAddLibrarian, handleDeleteLibrarian, newLibrarianName, setNewLibrarianName }) => (
-            <>
-                {/* Tambah Nama */}
-                <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Tambah Pustakawan</h2>
-                    <div className="flex flex-col sm:flex-row gap-3 items-center">
-                        <input
-                            type="text"
-                            id="namaBaru"
-                            placeholder="Nama pustakawan"
-                            className="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                            value={newLibrarianName}
-                            onChange={(e) => setNewLibrarianName(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleAddLibrarian()}
-                        />
-                        <button
-                            onClick={handleAddLibrarian}
-                            className="w-full sm:w-auto px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 transition-colors shadow-md"
-                        >
-                            Tambah
-                        </button>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-3">
-                        Nama disimpan aman (pakai ID otomatis di database). Di tampilan hanya nama yang ditunjukkan.
-                    </p>
-                </div>
-
-                {/* Daftar Nama (hapus) */}
-                <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Daftar Nama (Hapus)</h2>
-                    <div className="divide-y divide-gray-200">
-                        {librarians.length === 0 ? (
-                            <div className="py-2 text-gray-500">Belum ada pustakawan.</div>
-                        ) : (
-                            librarians.map((librarian) => (
-                                <div key={librarian.id} className="flex items-center justify-between py-2">
-                                    <div className="text-gray-800">{librarian.nama}</div>
-                                    <button
-                                        onClick={() => handleDeleteLibrarian(librarian.id, librarian.nama)}
-                                        className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors shadow-sm text-sm"
-                                    >
-                                        Hapus
-                                    </button>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-            </>
-        );
-
-        const ScheduleManagement = ({ librarians, nameMap, selectedLibrarianId, setSelectedLibrarianId, selectedShift, setSelectedShift, checkedDays, setCheckedDays, handleDayChange, handleSaveSchedule, schedules }) => (
-            <>
-                {/* Penjadwalan */}
-                <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Atur Jadwal Pustakawan</h2>
-                    <div className="flex flex-col gap-4 mb-4">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                            <label htmlFor="selectNama" className="text-gray-700 font-medium whitespace-nowrap">
-                                Pilih Nama:
-                            </label>
-                            <select
-                                id="selectNama"
-                                className="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
-                                value={selectedLibrarianId}
-                                onChange={(e) => setSelectedLibrarianId(e.target.value)}
-                            >
-                                {librarians.length === 0 ? (
-                                    <option value="">(Belum ada nama)</option>
-                                ) : (
-                                    librarians.map((librarian) => (
-                                        <option key={librarian.id} value={librarian.id}>
-                                            {librarian.nama}
-                                        </option>
-                                    ))
-                                )}
-                            </select>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                            <label htmlFor="selectShift" className="text-gray-700 font-medium whitespace-nowrap">
-                                Shift:
-                            </label>
-                            <select
-                                id="selectShift"
-                                className="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
-                                value={selectedShift}
-                                onChange={(e) => setSelectedShift(e.target.value)}
-                            >
-                                <option value="siang">Siang (07:30–11:00)</option>
-                                <option value="malam">Malam (20:30–22:30)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
-                        {HARI_ORDER.map((day) => (
-                            <label key={day} className="flex items-center space-x-2 text-gray-700">
-                                <input
-                                    type="checkbox"
-                                    value={day}
-                                    checked={checkedDays.includes(day)}
-                                    onChange={handleDayChange}
-                                    className="form-checkbox h-5 w-5 text-teal-600 rounded focus:ring-teal-500"
-                                />
-                                <span>{TitleCase(day)}</span>
-                            </label>
-                        ))}
-                    </div>
-                    <button
-                        onClick={handleSaveSchedule}
-                        className="w-full px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 transition-colors shadow-md"
-                    >
-                        Simpan Jadwal
-                    </button>
-                    <p className="text-sm text-gray-500 mt-3">
-                        Centang beberapa hari untuk menetapkan shift yang sama ke semua hari terpilih.
-                    </p>
-                </div>
-
-                {/* Rekap Jadwal per Pustakawan */}
-                <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Jadwal Pustakawan (Nama → Hari (Shift))</h2>
-                    <div className="divide-y divide-gray-200">
-                        {Object.keys(nameMap).length === 0 && Object.keys(schedules).length === 0 ? (
-                            <div className="py-2 text-gray-500">Belum ada data jadwal.</div>
-                        ) : (
-                            Array.from(new Set([...Object.keys(nameMap), ...Object.keys(schedules)]))
-                                .sort((a, b) => (nameMap[a] || '').localeCompare(nameMap[b] || ''))
-                                .map((id) => {
-                                    const nama = nameMap[id] || '(nama tidak ditemukan)';
-                                    const tugas = schedules[id] || [];
-                                    return (
-                                        <div key={id} className="flex flex-col sm:flex-row sm:items-center justify-between py-2">
-                                            <div className="font-semibold text-gray-800 mb-1 sm:mb-0">{nama}</div>
-                                            <div className="text-gray-700 text-sm sm:text-base">
-                                                {tugas.length === 0 ? (
-                                                    <span className="text-gray-500">(belum dijadwalkan)</span>
-                                                ) : (
-                                                    tugas.map((t) => `${TitleCase(t.hari)} (${t.shift === 'siang' ? 'Siang' : 'Malam'})`).join(', ')
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                        )}
-                    </div>
-                </div>
-            </>
-        );
-
-        const AttendanceReports = ({ librarians, nameMap, selectedMonth, setSelectedMonth, selectedYear, setSelectedYear, allRawAttendanceData, rawSchedules, selectedLibrarianForDetails, setSelectedLibrarianForDetails, handleUnmarkAttendance, years, months }) => {
-
-            // Menyiapkan data absensi terperinci untuk pustakawan tertentu
-            const getDetailedLibrarianAttendance = () => {
-                if (!selectedLibrarianForDetails) return [];
-                
-                const data = [];
-                const targetMonth = parseInt(selectedMonth);
-                const targetYear = parseInt(selectedYear);
-                
-                const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
-
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const dateString = `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                    const dateObj = new Date(dateString);
-                    const dayOfWeek = HARI_ORDER[dateObj.getDay()];
-                    
-                    const dailyRecords = allRawAttendanceData[dateString] || {};
-                    const librarianDailyAttendance = dailyRecords[selectedLibrarianForDetails] || {};
-                    const librarianScheduleForDay = rawSchedules?.[dayOfWeek]?.[selectedLibrarianForDetails] || {};
-
-                    const scheduledShifts = [];
-                    if (rawSchedules?.[dayOfWeek]?.['siang']?.[selectedLibrarianForDetails]) {
-                        scheduledShifts.push('siang');
-                    }
-                    if (rawSchedules?.[dayOfWeek]?.['malam']?.[selectedLibrarianForDetails]) {
-                        scheduledShifts.push('malam');
-                    }
-
-                    if (scheduledShifts.length > 0) {
-                        scheduledShifts.forEach(shift => {
-                            const record = librarianDailyAttendance[shift];
-                            let status = 'Alpha';
-                            let time = '';
-                            if (record) {
-                                status = TitleCase(record.status);
-                                time = getFormattedTime(record.time);
-                            }
-
-                            data.push({
-                                id: `${dateString}-${shift}`,
-                                date: dateString,
-                                day: TitleCase(dayOfWeek),
-                                shift: TitleCase(shift),
-                                status: status,
-                                time: time,
-                                librarianId: selectedLibrarianForDetails,
-                                shiftKey: shift
-                            });
-                        });
-                    }
-                }
-                return data;
-            };
-
-            const monthlyAbsenceData = getDetailedLibrarianAttendance();
-
-            return (
-                <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Rekap Absensi Bulanan</h2>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-4">
-                        <label htmlFor="selectMonth" className="text-gray-700 font-medium whitespace-nowrap">
-                            Bulan:
-                        </label>
-                        <select
-                            id="selectMonth"
-                            className="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
-                            value={selectedMonth}
-                            onChange={(e) => { setSelectedMonth(e.target.value); setSelectedLibrarianForDetails(null); }}
-                        >
-                            {months.map((monthNum, index) => (
-                                <option key={monthNum} value={monthNum}>
-                                    {getMonthName(monthNum)}
-                                </option>
-                            ))}
-                        </select>
-                        <label htmlFor="selectYear" className="text-gray-700 font-medium whitespace-nowrap">
-                            Tahun:
-                        </label>
-                        <select
-                            id="selectYear"
-                            className="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
-                            value={selectedYear}
-                            onChange={(e) => { setSelectedYear(e.target.value); setSelectedLibrarianForDetails(null); }}
-                        >
-                            {years.map(year => (
-                                <option key={year} value={year}>
-                                    {year}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    
-                    {selectedLibrarianForDetails ? (
-                        /* Tampilan Detail */
-                        <div className="mt-4">
-                            <button
-                                onClick={() => setSelectedLibrarianForDetails(null)}
-                                className="text-teal-600 hover:text-teal-800 font-semibold mb-4"
-                            >
-                                &larr; Kembali ke Daftar
-                            </button>
-                            <h3 className="text-lg font-bold text-gray-800 mb-4">
-                                Absensi {nameMap[selectedLibrarianForDetails]} ({getMonthName(selectedMonth)} {selectedYear})
-                            </h3>
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full bg-white border border-gray-200 rounded-lg">
-                                    <thead>
-                                        <tr className="bg-gray-100 text-left text-gray-600 uppercase text-sm leading-normal">
-                                            <th className="py-3 px-6 border-b border-gray-200">Tanggal</th>
-                                            <th className="py-3 px-6 border-b border-gray-200">Hari</th>
-                                            <th className="py-3 px-6 border-b border-gray-200">Shift</th>
-                                            <th className="py-3 px-6 border-b border-gray-200">Keterangan</th>
-                                            <th className="py-3 px-6 border-b border-gray-200">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="text-gray-700 text-sm">
-                                        {monthlyAbsenceData.length === 0 ? (
-                                            <tr>
-                                                <td colSpan="5" className="py-3 px-6 text-center text-gray-500">
-                                                    Tidak ada catatan absensi atau jadwal.
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            monthlyAbsenceData.map((record) => (
-                                                <tr key={record.id} className="border-b border-gray-200 hover:bg-gray-50">
-                                                    <td className="py-3 px-6 whitespace-nowrap">{getFormattedDate(record.date)}</td>
-                                                    <td className="py-3 px-6 whitespace-nowrap">{record.day}</td>
-                                                    <td className="py-3 px-6 whitespace-nowrap">{record.shift}</td>
-                                                    <td className="py-3 px-6 whitespace-nowrap">{`${record.status} ${record.time}`}</td>
-                                                    <td className="py-3 px-6 whitespace-nowrap">
-                                                        {record.status !== 'Alpha' && (
-                                                            <button
-                                                                onClick={() => handleUnmarkAttendance(record.date, record.librarianId, record.shiftKey)}
-                                                                className="px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full hover:bg-red-200 transition-colors"
-                                                            >
-                                                                Batal
-                                                            </button>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    ) : (
-                        /* Tampilan Daftar Ringkasan */
-                        <div className="divide-y divide-gray-200 mt-4">
-                            {librarians.length === 0 ? (
-                                <div className="py-2 text-gray-500">Belum ada pustakawan.</div>
-                            ) : (
-                                librarians.map(librarian => (
-                                    <button
-                                        key={librarian.id}
-                                        onClick={() => setSelectedLibrarianForDetails(librarian.id)}
-                                        className="w-full text-left py-3 px-4 bg-gray-50 hover:bg-gray-100 transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 my-1"
-                                    >
-                                        <div className="flex justify-between items-center font-semibold text-gray-800">
-                                            <span>{librarian.nama}</span>
-                                            <span className="text-teal-600 text-sm">Lihat Detail &rarr;</span>
-                                        </div>
-                                    </button>
-                                ))
-                            )}
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        const OverallStats = ({ librarians, totalAttendanceStats }) => (
-            <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-700 mb-4">Statistik Absensi Individu (Total Keseluruhan)</h2>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full bg-white border border-gray-200 rounded-lg">
-                        <thead>
-                            <tr className="bg-gray-100 text-left text-gray-600 uppercase text-sm leading-normal">
-                                <th className="py-3 px-6 border-b border-gray-200">Nama Pustakawan</th>
-                                <th className="py-3 px-6 border-b border-gray-200">Hadir</th>
-                                <th className="py-3 px-6 border-b border-gray-200">Izin</th>
-                                <th className="py-3 px-6 border-b border-gray-200">Sakit</th>
-                                <th className="py-3 px-6 border-b border-gray-200">Alpha</th>
-                            </tr>
-                        </thead>
-                        <tbody className="text-gray-700 text-sm">
-                            {librarians.length === 0 ? (
-                                <tr>
-                                    <td colSpan="5" className="py-3 px-6 text-center text-gray-500">
-                                        Belum ada pustakawan.
-                                    </td>
-                                </tr>
-                            ) : (
-                                librarians.map((librarian) => {
-                                    const stats = totalAttendanceStats[librarian.id] || { hadir: 0, izin: 0, sakit: 0, alpha: 0 };
-                                    return (
-                                        <tr key={librarian.id} className="border-b border-gray-200 hover:bg-gray-50">
-                                            <td className="py-3 px-6 whitespace-nowrap font-semibold">{librarian.nama}</td>
-                                            <td className="py-3 px-6 whitespace-nowrap">{stats.hadir}</td>
-                                            <td className="py-3 px-6 whitespace-nowrap">{stats.izin}</td>
-                                            <td className="py-3 px-6 whitespace-nowrap">{stats.sakit}</td>
-                                            <td className="py-3 px-6 whitespace-nowrap">{stats.alpha}</td>
-                                        </tr>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-                <p className="text-sm text-gray-500 mt-3">
-                    Menampilkan total Hadir, Izin, Sakit, dan Alpha untuk setiap pustakawan berdasarkan semua data absensi yang tersedia (akumulasi dari seluruh waktu).
-                </p>
-            </div>
-        );
-
-        const AdminSettings = ({ newAdminPassword, setNewAdminPassword, handleChangeAdminPassword, passwordMessage, handleDeleteAllAttendance }) => (
-            <>
-                {/* Hapus Semua Data Absensi */}
-                <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Opsi Data Lanjut</h2>
-                    <button
-                        onClick={handleDeleteAllAttendance}
-                        className="w-full px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors shadow-md"
-                    >
-                        Hapus Semua Data Absensi
-                    </button>
-                    <p className="text-sm text-gray-500 mt-3">
-                        PERINGATAN: Tindakan ini akan menghapus SEMUA catatan absensi dari database dan tidak dapat dibatalkan.
-                    </p>
-                </div>
-
-                {/* Ganti Password */}
-                <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Ganti Password Admin</h2>
-                    <div className="flex flex-col sm:flex-row gap-3 items-center">
-                        <input
-                            type="password"
-                            id="passBaru"
-                            placeholder="Password baru"
-                            className="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                            value={newAdminPassword}
-                            onChange={(e) => setNewAdminPassword(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleChangeAdminPassword()}
-                        />
-                        <button
-                            onClick={handleChangeAdminPassword}
-                            className="w-full sm:w-auto px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 transition-colors shadow-md"
-                        >
-                            Ganti
-                        </button>
-                    </div>
-                    {passwordMessage && <p className="text-sm text-gray-500 mt-2">{passwordMessage}</p>}
-                </div>
-            </>
-        );
-
-
-        // ====================================================================
-        // Komponen Utama Aplikasi
-        // ====================================================================
-        const App = () => {
-          // Status Firebase
-          const [db, setDb] = useState(null);
-          const [currentPassword, setCurrentPassword] = useState(null);
-
-          // Status UI
-          const [isLoggedIn, setIsLoggedIn] = useState(false);
-          const [loginPassword, setLoginPassword] = useState('');
-          const [loginMessage, setLoginMessage] = useState('');
-          const [currentView, setCurrentView] = useState('dashboard'); // Tampilan default
-
-          const [newLibrarianName, setNewLibrarianName] = useState('');
-          const [librarians, setLibrarians] = useState([]); // { id, nama }
-          const [nameMap, setNameMap] = useState({});
-
-          const [selectedLibrarianId, setSelectedLibrarianId] = useState('');
-          const [selectedShift, setSelectedShift] = useState('siang');
-          const [checkedDays, setCheckedDays] = useState([]);
-
-          const [schedules, setSchedules] = useState({}); // { id -> [{ hari, shift }] }
-          const [rawSchedules, setRawSchedules] = useState({}); // { day -> { shift -> { id: true } } }
-
-          const [newAdminPassword, setNewAdminPassword] = useState('');
-          const [passwordMessage, setPasswordMessage] = useState('');
-
-          // Status untuk melihat detail Absensi Bulanan
-          const currentMonth = new Date().getMonth() + 1; // getMonth() adalah indeks 0
-          const currentYear = new Date().getFullYear();
-          const [selectedMonth, setSelectedMonth] = useState(currentMonth.toString());
-          const [selectedYear, setSelectedYear] = useState(currentYear.toString());
-          const [allRawAttendanceData, setAllRawAttendanceData] = useState({}); // Menyimpan semua data dari /absensi
-          const [selectedLibrarianForDetails, setSelectedLibrarianForDetails] = useState(null);
-
-          // Status untuk statistik absensi total (sepanjang waktu)
-          const [totalAttendanceStats, setTotalAttendanceStats] = useState({}); // { librarianId: { hadir:N, izin:N, sakit:N, alpha:N } }
-
-          // Status Modal
-          const [showModal, setShowModal] = useState(false);
-          const [modalTitle, setModalTitle] = useState('');
-          const [modalMessage, setModalMessage] = useState('');
-          const [modalType, setModalType] = useState('alert'); // 'alert' atau 'confirm'
-          const modalCallbackRef = useRef(null);
-
-          // Inisialisasi Firebase dan memuat kata sandi admin
-          useEffect(() => {
-            try {
-              const firebaseConfig = {
-                apiKey: "AIzaSyBb-hbcc_ZE2hH6dlc81HbIGMQi96y4qYI",
-                authDomain: "absensi-7ef83.firebaseapp.com",
-                databaseURL: "https://absensi-7ef83-default-rtdb.firebaseio.com",
-                projectId: "absensi-7ef83",
-                storageBucket: "absensi-7ef83.appspot.com",
-                messagingSenderId: "661765044421",
-                appId: "1:661765044421:web:b8578a195a6d208dc4d8ac"
-              };
-              // Inisialisasi Aplikasi Firebase
-              const app = initializeApp(firebaseConfig);
-              // Gunakan firebase.database() untuk mendapatkan instance database default (sesuai dengan compat SDK)
-              const database = firebase.database();
-              setDb(database);
-
-              // Gunakan instance `database` untuk semua operasi database (compat API)
-              const passwordRef = database.ref('admin/password');
-              passwordRef.on("value", (snapshot) => { // Menggunakan .on("value")
-                if (snapshot.exists()) {
-                  setCurrentPassword(snapshot.val());
-                } else {
-                  passwordRef.set('1234'); // Menggunakan .set()
-                  setCurrentPassword('1234');
-                }
-              });
-            } catch (error) {
-              console.error("Firebase initialization failed:", error);
-              setLoginMessage("Gagal memuat konfigurasi Firebase.");
-            }
-          }, []);
-
-          // Listener Realtime untuk pustakawan dan jadwal
-          useEffect(() => {
-            if (!db || !isLoggedIn) return;
-
-            // Gunakan instance `db` untuk semua operasi database (compat API)
-            const librariansRef = db.ref('pustakawan');
-            const unsubscribeLibrarians = librariansRef.on("value", (snapshot) => { // Menggunakan .on("value")
-              const newLibrarians = [];
-              const newNameMap = {};
-              snapshot.forEach((child) => {
-                const id = child.key;
-                const nama = child.val()?.nama || '(tanpa nama)';
-                newLibrarians.push({ id, nama });
-                newNameMap[id] = nama;
-              });
-              setLibrarians(newLibrarians);
-              setNameMap(newNameMap);
-
-              if (newLibrarians.length > 0 && (!selectedLibrarianId || !newLibrarians.some(lib => lib.id === selectedLibrarianId))) {
-                  setSelectedLibrarianId(newLibrarians[0].id);
-              } else if (newLibrarians.length === 0) {
-                  setSelectedLibrarianId('');
-              }
-            });
-
-            const schedulesRef = db.ref('jadwal');
-            const unsubscribeSchedules = schedulesRef.on("value", (snapshot) => { // Menggunakan .on("value")
-              const byPerson = {};
-              const raw = snapshot.val() || {};
-              setRawSchedules(raw);
-              if (snapshot.exists()) {
-                snapshot.forEach((daySnap) => {
-                  const day = daySnap.key;
-                  daySnap.forEach((shiftSnap) => {
-                    const shift = shiftSnap.key;
-                    const usersObj = shiftSnap.val() || {};
-                    Object.keys(usersObj).forEach((id) => {
-                      if (!byPerson[id]) byPerson[id] = [];
-                      byPerson[id].push({ hari: day, shift });
-                    });
-                  });
-                });
-              }
-              for (const id in byPerson) {
-                byPerson[id].sort((a, b) => HARI_ORDER.indexOf(a.hari) - HARI_ORDER.indexOf(b.hari));
-              }
-              setSchedules(byPerson);
-            });
-
-            return () => {
-              librariansRef.off("value", unsubscribeLibrarians); // Menggunakan .off()
-              schedulesRef.off("value", unsubscribeSchedules); // Menggunakan .off()
-            };
-          }, [db, isLoggedIn, selectedLibrarianId]);
-
-          // Listener untuk SEMUA catatan absensi dan menghitung statistik total
-          useEffect(() => {
-            if (!db || !isLoggedIn) return;
-
-            const allAttendanceRef = db.ref('absensi');
-            const unsubscribeAllAttendance = allAttendanceRef.on("value", async (allAttendanceSnapshot) => { // Menggunakan .on("value")
-                const allAttendanceData = allAttendanceSnapshot.val() || {};
-                setAllRawAttendanceData(allAttendanceData);
-
-                // Mengambil jadwal lagi di sini untuk memastikan data terbaru untuk perhitungan
-                const schedulesSnap = await db.ref('jadwal').once("value"); // Menggunakan .once("value")
-                const allSchedules = schedulesSnap.val() || {};
-
-
-                const calculatedTotalStats = {};
-                librarians.forEach(lib => {
-                    calculatedTotalStats[lib.id] = { hadir: 0, izin: 0, sakit: 0, alpha: 0 };
-                });
-
-                for (const dateString in allAttendanceData) {
-                    const dateObj = new Date(dateString);
-                    const dayOfWeek = HARI_ORDER[dateObj.getDay()];
-                    const dailyData = allAttendanceData[dateString];
-
-                    for (const libId of Object.keys(calculatedTotalStats)) {
-                        const librarianDailyAttendance = dailyData?.[libId] || {};
-                        const librarianScheduleForDay = allSchedules?.[dayOfWeek] || {};
-
-                        const scheduledShifts = [];
-                        if (librarianScheduleForDay['siang']?.[libId]) {
-                            scheduledShifts.push('siang');
-                        }
-                        if (librarianScheduleForDay['malam']?.[libId]) {
-                            scheduledShifts.push('malam');
-                        }
-
-                        scheduledShifts.forEach(shift => {
-                            const record = librarianDailyAttendance[shift];
-                            if (record) {
-                                calculatedTotalStats[libId][record.status]++;
-                            } else {
-                                calculatedTotalStats[libId]['alpha']++;
-                            }
-                        });
-                    }
-                }
-                setTotalAttendanceStats(calculatedTotalStats);
-            });
-
-            return () => {
-              allAttendanceRef.off("value", unsubscribeAllAttendance); // Menggunakan .off()
-            };
-          }, [db, isLoggedIn, librarians]);
-
-
-          // Penanganan Modal
-          const customAlert = (title, message) => {
-            setModalTitle(title);
-            setModalMessage(message);
-            setShowModal(true);
-            modalCallbackRef.current = () => {
-              setShowModal(false);
-            };
-          };
-
-          const customConfirm = (title, message, onConfirmCallback) => {
-            setModalTitle(title);
-            setModalMessage(message);
-            setModalType('confirm');
-            setShowModal(true);
-            modalCallbackRef.current = onConfirmCallback;
-          };
-
-          const handleModalConfirm = () => {
-            if (modalCallbackRef.current) {
-              modalCallbackRef.current();
-            }
-          };
-
-          const handleModalCancel = () => {
-            setShowModal(false);
-            modalCallbackRef.current = null;
-          };
-
-          const handleLogin = async () => {
-            if (loginPassword && currentPassword && loginPassword === currentPassword) {
-              setIsLoggedIn(true);
-              setLoginMessage('');
-            } else {
-              setLoginMessage('Password salah.');
-            }
-          };
-
-          const handleAddLibrarian = async () => {
-            const nama = (newLibrarianName || '').trim();
-            if (!nama) {
-              customAlert('Input Salah', 'Nama tidak boleh kosong.');
-              return;
-            }
-            try {
-              if (db) {
-                // Gunakan instance `db` untuk semua operasi database (compat API)
-                const newRef = db.ref('pustakawan').push(); // Menggunakan .push()
-                await newRef.set({ nama }); // Menggunakan .set()
-                setNewLibrarianName('');
-              }
-            } catch (e) {
-              customAlert('Gagal Menambah', 'Gagal menambah pustakawan: ' + e.message);
-            }
-          };
-
-          const handleDeleteLibrarian = (id, nama) => {
-            customConfirm(
-              'Konfirmasi Hapus',
-              `Hapus ${nama}? Semua penugasan jadwal dan catatan absensi orang ini juga akan dihapus.`,
-              async () => {
-                try {
-                  if (db) {
-                    const updates = {};
-                    for (const day of HARI_ORDER) {
-                      // Gunakan instance `db` untuk semua operasi database (compat API)
-                      const dayRef = await db.ref(`jadwal/${day}`).once("value"); // Menggunakan .once("value")
-                      if (dayRef.exists()) {
-                        dayRef.forEach((shiftSnap) => {
-                          const shiftKey = shiftSnap.key;
-                          if (shiftSnap.hasChild(id)) {
-                            updates[`/jadwal/${day}/${shiftKey}/${id}`] = null;
-                          }
-                        });
-                      }
-                    }
-                    // Gunakan instance `db` untuk semua operasi database (compat API)
-                    const allAttendanceSnap = await db.ref('absensi').once("value"); // Menggunakan .once("value")
-                    if (allAttendanceSnap.exists()) {
-                        allAttendanceSnap.forEach(dateSnap => {
-                            if (dateSnap.hasChild(id)) {
-                                updates[`/absensi/${dateSnap.key}/${id}`] = null;
-                            }
-                        });
-                            }
-                    updates[`/pustakawan/${id}`] = null;
-                    await db.ref('/').update(updates); // Menggunakan .update()
-                  }
-                  setShowModal(false);
-                } catch (e) {
-                  customAlert('Gagal Hapus', 'Gagal hapus pustakawan: ' + e.message);
-                  setShowModal(false);
-                }
-              }
-            );
-          };
-
-          const handleDayChange = (e) => {
-            const { value, checked } = e.target;
-            if (checked) {
-              setCheckedDays((prev) => [...prev, value]);
-            } else {
-              setCheckedDays((prev) => prev.filter((day) => day !== value));
-            }
-          };
-
-          const handleSaveSchedule = async () => {
-            if (!selectedLibrarianId) {
-              customAlert('Pilih Nama', 'Pilih nama pustakawan terlebih dahulu.');
-              return;
-            }
-            if (checkedDays.length === 0) {
-              customAlert('Pilih Hari', 'Centang minimal satu hari.');
-              return;
-            }
-            try {
-              if (db) {
-                const updates = {};
-                checkedDays.forEach((day) => {
-                  updates[`/jadwal/${day}/${selectedShift}/${selectedLibrarianId}`] = true;
-                });
-                // Gunakan instance `db` untuk semua operasi database (compat API)
-                await db.ref('/').update(updates); // Menggunakan .update()
-                setCheckedDays([]);
-                customAlert('Sukses', 'Jadwal berhasil disimpan.');
-              }
-            } catch (e) {
-              customAlert('Gagal Simpan', 'Gagal menyimpan jadwal: ' + e.message);
-            }
-          };
-
-          const handleChangeAdminPassword = async () => {
-            const p = (newAdminPassword || '').trim();
-            if (!p) {
-              setPasswordMessage('Password baru tidak boleh kosong.');
-              return;
-            }
-            try {
-              if (db) {
-                // Gunakan instance `db` untuk semua operasi database (compat API)
-                await db.ref('admin/password').set(p); // Menggunakan .set()
-                setNewAdminPassword('');
-                setPasswordMessage('Password berhasil diganti.');
-              }
-            } catch (e) {
-              setPasswordMessage('Gagal ganti password: ' + e.message);
-            }
-          };
-
-          const handleUnmarkAttendance = async (date, librarianId, shiftToUnmark) => {
-            customConfirm(
-              'Batalkan Absensi',
-              `Apakah Anda yakin ingin membatalkan absensi ${nameMap[librarianId]} untuk shift ${TitleCase(shiftToUnmark)} pada tanggal ${date}?`,
-              async () => {
-                try {
-                  if (db) {
-                    const attendancePath = `absensi/${date}/${librarianId}/${shiftToUnmark}`;
-                    // Gunakan instance `db` untuk semua operasi database (compat API)
-                    await db.ref(attendancePath).remove(); // Menggunakan .remove()
-                    setShowModal(false);
-                    customAlert('Berhasil', 'Absensi berhasil dibatalkan.');
-                  }
-                } catch (e) {
-                  customAlert('Gagal', 'Gagal membatalkan absensi: ' + e.message);
-                  setShowModal(false);
-                }
-              }
-            );
-          };
-
-          const handleDeleteAllAttendance = () => {
-            customConfirm(
-              'Konfirmasi Penghapusan Semua Data Absensi',
-              'Apakah Anda yakin ingin MENGHAPUS SEMUA data absensi? Tindakan ini tidak dapat dibatalkan.',
-              async () => {
-                try {
-                  if (db) {
-                    // Gunakan instance `db` untuk semua operasi database (compat API)
-                    await db.ref('absensi').remove(); // Menggunakan .remove()
-                    setShowModal(false);
-                    customAlert('Sukses', 'Semua data absensi berhasil dihapus.');
-                  }
-                } catch (e) {
-                  customAlert('Gagal Hapus', 'Gagal menghapus semua data absensi: ' + e.message);
-                  setShowModal(false);
-                }
-              }
-            );
-          };
-
-
-          const renderContent = () => {
-            switch (currentView) {
-              case 'dashboard':
-                return <Dashboard />;
-              case 'librarians':
-                return <LibrarianManagement
-                    librarians={librarians}
-                    nameMap={nameMap}
-                    handleAddLibrarian={handleAddLibrarian}
-                    handleDeleteLibrarian={handleDeleteLibrarian}
-                    newLibrarianName={newLibrarianName}
-                    setNewLibrarianName={setNewLibrarianName}
-                />;
-              case 'schedules':
-                return <ScheduleManagement
-                    librarians={librarians}
-                    nameMap={nameMap}
-                    selectedLibrarianId={selectedLibrarianId}
-                    setSelectedLibrarianId={setSelectedLibrarianId}
-                    selectedShift={selectedShift}
-                    setSelectedShift={setSelectedShift}
-                    checkedDays={checkedDays}
-                    setCheckedDays={setCheckedDays}
-                    handleDayChange={handleDayChange}
-                    handleSaveSchedule={handleSaveSchedule}
-                    schedules={schedules}
-                />;
-              case 'attendance':
-                return <AttendanceReports
-                    librarians={librarians}
-                    nameMap={nameMap}
-                    selectedMonth={selectedMonth}
-                    setSelectedMonth={setSelectedMonth}
-                    selectedYear={selectedYear}
-                    setSelectedYear={setSelectedYear}
-                    allRawAttendanceData={allRawAttendanceData}
-                    rawSchedules={rawSchedules}
-                    selectedLibrarianForDetails={selectedLibrarianForDetails}
-                    setSelectedLibrarianForDetails={setSelectedLibrarianForDetails}
-                    handleUnmarkAttendance={handleUnmarkAttendance}
-                    years={years}
-                    months={months}
-                />;
-              case 'overallStats':
-                return <OverallStats
-                    librarians={librarians}
-                    totalAttendanceStats={totalAttendanceStats}
-                />;
-              case 'adminSettings':
-                return <AdminSettings
-                    newAdminPassword={newAdminPassword}
-                    setNewAdminPassword={setNewAdminPassword}
-                    handleChangeAdminPassword={handleChangeAdminPassword}
-                    passwordMessage={passwordMessage}
-                    handleDeleteAllAttendance={handleDeleteAllAttendance}
-                />;
-              default:
-                return <Dashboard />;
-            }
-          };
-
-          const years = Array.from({length: 10}, (_, i) => (currentYear - 5 + i).toString());
-          const months = Array.from({length: 12}, (_, i) => (i + 1).toString().padStart(2, '0'));
-
-          return (
-            <div className="flex justify-center p-4 min-h-screen bg-gray-50">
-              <div className="w-full max-w-2xl">
-                <h1 className="text-3xl font-bold text-gray-800 mb-6">Panel Admin Absensi Pustakawan</h1>
-
-                {/* LOGIN */}
-                {!isLoggedIn && (
-                  <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-4">Login Admin</h2>
-                    <div className="flex flex-col sm:flex-row gap-3 items-center">
-                      <input
-                        type="password"
-                        id="loginPass"
-                        placeholder="Password admin"
-                        className="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-                      />
-                      <button
-                        onClick={handleLogin}
-                        className="w-full sm:w-auto px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 transition-colors shadow-md"
-                      >
-                        Login
-                      </button>
-                    </div>
-                    {loginMessage && <p className="text-sm text-red-600 mt-2">{loginMessage}</p>}
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+
+  const ScheduleManagement = ({ librarians, nameMap, selectedLibrarianId, setSelectedLibrarianId, selectedShift, setSelectedShift, checkedDays, setCheckedDays, handleDayChange, handleSaveSchedule, schedules, rawSchedules }) => (
+    <div className="space-y-4">
+      <Card title="Atur Jadwal Pustakawan">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+          <select value={selectedLibrarianId} onChange={e => setSelectedLibrarianId(e.target.value)} className="p-3 border rounded-lg">
+            <option value="">— Pilih pustakawan —</option>
+            {librarians.map(l => <option key={l.id} value={l.id}>{l.nama}</option>)}
+          </select>
+          <select value={selectedShift} onChange={e => setSelectedShift(e.target.value)} className="p-3 border rounded-lg">
+            <option value="siang">Siang (07:30–11:00)</option>
+            <option value="malam">Malam (20:30–22:30)</option>
+          </select>
+          <div className="flex items-center gap-2">
+            <button onClick={handleSaveSchedule} className="px-4 py-3 bg-teal-600 text-white rounded-lg">Simpan</button>
+            <div className="text-sm text-gray-500">Centang hari lalu Simpan</div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {HARI_ORDER.map(day => (
+            <label key={day} className="flex items-center gap-2 p-2 border rounded">
+              <input type="checkbox" value={day} checked={checkedDays.includes(day)} onChange={handleDayChange} className="h-4 w-4" />
+              <span className="capitalize">{day}</span>
+            </label>
+          ))}
+        </div>
+      </Card>
+
+      <Card title="Rekap Jadwal (Per Pustakawan)">
+        {Object.keys(nameMap).length === 0 && Object.keys(schedules).length === 0 ? <Empty text="Belum ada data jadwal." /> :
+          Array.from(new Set([...Object.keys(nameMap), ...Object.keys(schedules)]))
+            .sort((a,b) => (nameMap[a]||'').localeCompare(nameMap[b]||''))
+            .map(id => {
+              const nama = nameMap[id] || '(tidak ditemukan)';
+              const tugas = schedules[id] || [];
+              return (
+                <div key={id} className="flex justify-between items-center py-2 border-b">
+                  <div>
+                    <div className="font-medium">{nama}</div>
+                    <div className="text-xs text-gray-400">{id}</div>
                   </div>
-                )}
-
-                {/* PANEL */}
-                {isLoggedIn && (
-                  <div id="admin-panel">
-                    {/* Navigation Bar */}
-                    <nav className="bg-teal-700 p-3 rounded-xl mb-6 shadow-lg flex flex-wrap justify-center gap-2">
-                        <button
-                            onClick={() => setCurrentView('dashboard')}
-                            className={`px-4 py-2 rounded-lg text-white font-semibold transition-colors ${currentView === 'dashboard' ? 'bg-teal-800' : 'hover:bg-teal-600'}`}
-                        >
-                            Dashboard
-                        </button>
-                        <button
-                            onClick={() => setCurrentView('librarians')}
-                            className={`px-4 py-2 rounded-lg text-white font-semibold transition-colors ${currentView === 'librarians' ? 'bg-teal-800' : 'hover:bg-teal-600'}`}
-                        >
-                            Pustakawan
-                        </button>
-                        <button
-                            onClick={() => setCurrentView('schedules')}
-                            className={`px-4 py-2 rounded-lg text-white font-semibold transition-colors ${currentView === 'schedules' ? 'bg-teal-800' : 'hover:bg-teal-600'}`}
-                        >
-                            Jadwal
-                        </button>
-                        <button
-                            onClick={() => setCurrentView('attendance')}
-                            className={`px-4 py-2 rounded-lg text-white font-semibold transition-colors ${currentView === 'attendance' ? 'bg-teal-800' : 'hover:bg-teal-600'}`}
-                        >
-                            Absensi Bulanan
-                        </button>
-                        <button
-                            onClick={() => setCurrentView('overallStats')}
-                            className={`px-4 py-2 rounded-lg text-white font-semibold transition-colors ${currentView === 'overallStats' ? 'bg-teal-800' : 'hover:bg-teal-600'}`}
-                        >
-                            Total Statistik
-                        </button>
-                        <button
-                            onClick={() => setCurrentView('adminSettings')}
-                            className={`px-4 py-2 rounded-lg text-white font-semibold transition-colors ${currentView === 'adminSettings' ? 'bg-teal-800' : 'hover:bg-teal-600'}`}
-                        >
-                            Pengaturan Admin
-                        </button>
-                    </nav>
-
-                    {/* Render Current View */}
-                    {renderContent()}
+                  <div className="text-sm text-gray-600">
+                    {tugas.length === 0 ? <span className="text-gray-400">Belum dijadwalkan</span> :
+                      tugas.map(t => `${TitleCase(t.hari)} (${t.shift==='siang'?'Siang':'Malam'})`).join(', ')}
                   </div>
-                )}
+                </div>
+              );
+            })
+        }
+      </Card>
+    </div>
+  );
 
-                <Modal
-                  show={showModal}
-                  title={modalTitle}
-                  message={modalMessage}
-                  onConfirm={handleModalConfirm}
-                  onCancel={handleModalCancel}
-                  type={modalType}
-                />
+  const AttendanceReports = ({ librarians, nameMap, selectedMonth, setSelectedMonth, selectedYear, setSelectedYear, allRawAttendanceData, rawSchedules, selectedLibrarianForDetails, setSelectedLibrarianForDetails, handleUnmarkAttendance, years, months }) => {
+    // fungsi pembantu untuk tampilan detail (mengikuti logika Anda)
+    const getDetailedLibrarianAttendance = () => {
+      if (!selectedLibrarianForDetails) return [];
+      const data = [];
+      const targetMonth = parseInt(selectedMonth,10);
+      const targetYear = parseInt(selectedYear,10);
+      const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateString = `${targetYear}-${String(targetMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const dateObj = new Date(dateString);
+        if (isNaN(dateObj)) continue;
+        const dayOfWeek = HARI_ORDER[dateObj.getDay()];
+        const dailyRecords = allRawAttendanceData[dateString] || {};
+        const librarianDailyAttendance = dailyRecords[selectedLibrarianForDetails] || {};
+        const scheduledShifts = [];
+        if (rawSchedules?.[dayOfWeek]?.['siang']?.[selectedLibrarianForDetails]) scheduledShifts.push('siang');
+        if (rawSchedules?.[dayOfWeek]?.['malam']?.[selectedLibrarianForDetails]) scheduledShifts.push('malam');
+        scheduledShifts.forEach(shift => {
+          const record = librarianDailyAttendance[shift];
+          let status = 'Alpha', time = '';
+          if (record) { status = TitleCase(record.status); time = getFormattedTime(record.time || record.timestamp || record.tanggal || record.ts); }
+          data.push({ id: `${dateString}-${shift}`, date: dateString, day: TitleCase(dayOfWeek), shift: TitleCase(shift), status, time, librarianId: selectedLibrarianForDetails, shiftKey: shift });
+        });
+      }
+      return data;
+    };
+
+    const monthlyAbsenceData = getDetailedLibrarianAttendance();
+
+    return (
+      <div className="space-y-4">
+        <Card title="Rekap Absensi Bulanan">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <select value={selectedMonth} onChange={e => { setSelectedMonth(e.target.value); setSelectedLibrarianForDetails(null);} } className="p-3 border rounded">
+              {months.map(m => <option key={m} value={m}>{getMonthName(m)}</option>)}
+            </select>
+            <select value={selectedYear} onChange={e => { setSelectedYear(e.target.value); setSelectedLibrarianForDetails(null);} } className="p-3 border rounded">
+              {years.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+            <div className="col-span-2 text-sm text-gray-500 flex items-center">Pilih pustakawan dari daftar untuk melihat detail bulanan.</div>
+          </div>
+        </Card>
+
+        <Card>
+          {selectedLibrarianForDetails ? (
+            <>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <button onClick={() => setSelectedLibrarianForDetails(null)} className="text-teal-600 hover:underline">&larr; Kembali</button>
+                  <h4 className="text-lg font-semibold mt-2">{nameMap[selectedLibrarianForDetails]}</h4>
+                  <div className="text-xs text-gray-500">{selectedMonth}/{selectedYear}</div>
+                </div>
+                <div className="text-sm text-gray-500">Ringkasan detail</div>
               </div>
-            </div>
-          );
-        };
 
-        // Menggunakan createRoot untuk React 18
-        const container = document.getElementById('root');
-        const root = ReactDOM.createRoot(container);
-        root.render(<App />);
-    </script>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="text-left text-xs text-gray-500 uppercase">
+                    <tr>
+                      <th className="py-2 pr-4">Tanggal</th>
+                      <th className="py-2 pr-4">Hari</th>
+                      <th className="py-2 pr-4">Shift</th>
+                      <th className="py-2 pr-4">Keterangan</th>
+                      <th className="py-2 pr-4">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {monthlyAbsenceData.length === 0 ? (
+                      <tr><td colSpan="5" className="py-4 text-center text-gray-500">Tidak ada catatan absensi pada bulan ini.</td></tr>
+                    ) : monthlyAbsenceData.map(rec => (
+                      <tr key={rec.id} className="border-t">
+                        <td className="py-2 pr-4">{getFormattedDate(rec.date)}</td>
+                        <td className="py-2 pr-4">{rec.day}</td>
+                        <td className="py-2 pr-4">{rec.shift}</td>
+                        <td className="py-2 pr-4">{rec.status} {rec.time}</td>
+                        <td className="py-2 pr-4">
+                          {rec.status !== 'Alpha' && (<button onClick={() => handleUnmarkAttendance(rec.date, rec.librarianId, rec.shiftKey)} className="px-3 py-1 text-xs bg-red-50 text-red-700 rounded">Batal</button>)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <>
+              {librarians.length === 0 ? <Empty text="Belum ada pustakawan." /> : (
+                <div className="grid gap-2">
+                  {librarians.map(l => (
+                    <button key={l.id} onClick={() => setSelectedLibrarianForDetails(l.id)} className="text-left p-3 bg-gray-50 rounded hover:bg-gray-100 flex justify-between items-center">
+                      <div className="font-medium">{l.nama}</div>
+                      <div className="text-sm text-teal-600">Lihat detail →</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </Card>
+      </div>
+    );
+  };
+
+  const OverallStats = ({ librarians, totalAttendanceStats }) => (
+    <Card title="Statistik Absensi (Total)">
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead className="text-left text-xs text-gray-500 uppercase">
+            <tr>
+              <th className="py-2 pr-4">Nama</th>
+              <th className="py-2 pr-4">Hadir</th>
+              <th className="py-2 pr-4">Izin</th>
+              <th className="py-2 pr-4">Sakit</th>
+              <th className="py-2 pr-4">Alpha</th>
+            </tr>
+          </thead>
+          <tbody>
+            {librarians.length === 0 ? (
+              <tr><td colSpan="5" className="py-4 text-center text-gray-500">Belum ada pustakawan.</td></tr>
+            ) : librarians.map(l => {
+              const s = totalAttendanceStats[l.id] || { hadir:0, izin:0, sakit:0, alpha:0 };
+              return (
+                <tr key={l.id} className="border-t">
+                  <td className="py-2 pr-4 font-medium">{l.nama}</td>
+                  <td className="py-2 pr-4">{s.hadir}</td>
+                  <td className="py-2 pr-4">{s.izin}</td>
+                  <td className="py-2 pr-4">{s.sakit}</td>
+                  <td className="py-2 pr-4">{s.alpha}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <div className="text-sm text-gray-500 mt-3">Ringkasan akumulasi dari seluruh data absensi.</div>
+    </Card>
+  );
+
+  const AdminSettings = ({ newAdminPassword, setNewAdminPassword, handleChangeAdminPassword, passwordMessage, handleDeleteAllAttendance }) => (
+    <div className="space-y-4">
+      <Card title="Opsi Data Lanjut">
+        <div className="flex gap-3">
+          <button onClick={handleDeleteAllAttendance} className="px-4 py-3 bg-red-600 text-white rounded-lg">Hapus Semua Absensi</button>
+          <div className="text-sm text-gray-500 self-center">Penghapusan tidak dapat dibatalkan.</div>
+        </div>
+      </Card>
+
+      <Card title="Ganti Password Admin">
+        <div className="flex gap-3">
+          <input type="password" placeholder="Password baru" className="flex-grow p-3 border rounded-lg" value={newAdminPassword} onChange={e => setNewAdminPassword(e.target.value)} />
+          <button onClick={handleChangeAdminPassword} className="px-4 py-3 bg-teal-600 text-white rounded-lg">Ganti</button>
+        </div>
+        {passwordMessage && <div className="text-sm text-gray-500 mt-2">{passwordMessage}</div>}
+      </Card>
+    </div>
+  );
+
+  // ----------------------
+  // App utama (mempertahankan logika Anda)
+  // ----------------------
+  const App = () => {
+    // firebase init (compat)
+    const initializeApp = firebase.initializeApp;
+    const [db, setDb] = useState(null);
+    const [currentPassword, setCurrentPassword] = useState(null);
+
+    // UI state
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [loginPassword, setLoginPassword] = useState('');
+    const [loginMessage, setLoginMessage] = useState('');
+    const [currentView, setCurrentView] = useState('dashboard');
+
+    // data state (sama seperti Anda)
+    const [newLibrarianName, setNewLibrarianName] = useState('');
+    const [librarians, setLibrarians] = useState([]);
+    const [nameMap, setNameMap] = useState({});
+    const [selectedLibrarianId, setSelectedLibrarianId] = useState('');
+    const [selectedShift, setSelectedShift] = useState('siang');
+    const [checkedDays, setCheckedDays] = useState([]);
+    const [schedules, setSchedules] = useState({});
+    const [rawSchedules, setRawSchedules] = useState({});
+    const [newAdminPassword, setNewAdminPassword] = useState('');
+    const [passwordMessage, setPasswordMessage] = useState('');
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    const [selectedMonth, setSelectedMonth] = useState(String(currentMonth).padStart(2,'0'));
+    const [selectedYear, setSelectedYear] = useState(String(currentYear));
+    const [allRawAttendanceData, setAllRawAttendanceData] = useState({});
+    const [selectedLibrarianForDetails, setSelectedLibrarianForDetails] = useState(null);
+    const [totalAttendanceStats, setTotalAttendanceStats] = useState({});
+    const [showModal, setShowModal] = useState(false);
+    const [modalTitle, setModalTitle] = useState('');
+    const [modalMessage, setModalMessage] = useState('');
+    const [modalType, setModalType] = useState('alert');
+    const modalCallbackRef = useRef(null);
+
+    // years/months untuk select
+    const years = Array.from({length: 10}, (_, i) => (currentYear - 5 + i).toString());
+    const months = Array.from({length: 12}, (_, i) => (String(i+1).padStart(2,'0')));
+
+    // inisialisasi firebase & ambil admin/password
+    useEffect(() => {
+      try {
+        const firebaseConfig = {
+          apiKey: "AIzaSyBb-hbcc_ZE2hH6dlc81HbIGMQi96y4qYI",
+          authDomain: "absensi-7ef83.firebaseapp.com",
+          databaseURL: "https://absensi-7ef83-default-rtdb.firebaseio.com",
+          projectId: "absensi-7ef83",
+          storageBucket: "absensi-7ef83.appspot.com",
+          messagingSenderId: "661765044421",
+          appId: "1:661765044421:web:b8578a195a6d208dc4d8ac"
+        };
+        const app = initializeApp(firebaseConfig);
+        const database = firebase.database();
+        setDb(database);
+
+        const passwordRef = database.ref('admin/password');
+        passwordRef.on('value', snap => {
+          if (snap.exists()) setCurrentPassword(snap.val());
+          else { passwordRef.set('1234'); setCurrentPassword('1234'); }
+        });
+      } catch (e) {
+        console.error('Firebase initialization failed', e);
+        setLoginMessage('Gagal memuat konfigurasi Firebase.');
+      }
+    }, []);
+
+    // listeners pustakawan & jadwal (aktif saat login)
+    useEffect(() => {
+      if (!db) return;
+      // pustakawan
+      const libRef = db.ref('pustakawan');
+      const onLib = libRef.on('value', snap => {
+        const arr=[]; const map={};
+        snap.forEach(ch => { arr.push({ id: ch.key, ...ch.val() }); map[ch.key] = ch.val()?.nama || '(tanpa nama)'; });
+        setLibrarians(arr); setNameMap(map);
+        if (arr.length > 0 && (!selectedLibrarianId || !arr.some(x=>x.id===selectedLibrarianId))) setSelectedLibrarianId(arr[0].id);
+        if (arr.length === 0) setSelectedLibrarianId('');
+      });
+
+      const jadRef = db.ref('jadwal');
+      const onJad = jadRef.on('value', snap => {
+        const byPerson = {}; const raw = snap.val() || {};
+        setRawSchedules(raw);
+        snap.forEach(daySnap => {
+          const day = daySnap.key;
+          daySnap.forEach(shiftSnap => {
+            const shift = shiftSnap.key;
+            const usersObj = shiftSnap.val() || {};
+            Object.keys(usersObj).forEach(id => {
+              if(!byPerson[id]) byPerson[id]=[];
+              byPerson[id].push({ hari: day, shift });
+            });
+          });
+        });
+        for (const id in byPerson) byPerson[id].sort((a,b)=> HARI_ORDER.indexOf(a.hari)-HARI_ORDER.indexOf(b.hari));
+        setSchedules(byPerson);
+      });
+
+      return () => { libRef.off('value', onLib); jadRef.off('value', onJad); };
+    }, [db]);
+
+    // listener absensi & hitung total stats
+    useEffect(() => {
+      if (!db) return;
+      const absRef = db.ref('absensi');
+      const onAll = absRef.on('value', async snap => {
+        const all = snap.val() || {};
+        setAllRawAttendanceData(all);
+
+        // ambil jadwal untuk perhitungan alpha/hadir
+        const jadSnap = await db.ref('jadwal').once('value');
+        const allSchedules = jadSnap.val() || {};
+
+        const calc = {};
+        librarians.forEach(lib => calc[lib.id] = { hadir:0, izin:0, sakit:0, alpha:0 });
+
+        for (const dateString in all) {
+          const dateObj = new Date(dateString);
+          if (isNaN(dateObj)) continue;
+          const dayOfWeek = HARI_ORDER[dateObj.getDay()];
+          const daily = all[dateString];
+          for (const libId of Object.keys(calc)) {
+            const libDaily = daily?.[libId] || {};
+            const libScheduleDay = allSchedules?.[dayOfWeek] || {};
+            const scheduledShifts = [];
+            if (libScheduleDay['siang']?.[libId]) scheduledShifts.push('siang');
+            if (libScheduleDay['malam']?.[libId]) scheduledShifts.push('malam');
+            scheduledShifts.forEach(shift => {
+              const record = libDaily[shift];
+              if (record && record.status) {
+                calc[libId][record.status] = (calc[libId][record.status]||0) + 1;
+              } else {
+                calc[libId]['alpha'] = (calc[libId]['alpha']||0) + 1;
+              }
+            });
+          }
+        }
+        setTotalAttendanceStats(calc);
+      });
+
+      return () => absRef.off('value', onAll);
+    }, [db, librarians]);
+
+    // Modal helpers
+    const customAlert = (title, message) => { setModalTitle(title); setModalMessage(message); setModalType('alert'); setShowModal(true); modalCallbackRef.current = () => setShowModal(false); };
+    const customConfirm = (title, message, cb) => { setModalTitle(title); setModalMessage(message); setModalType('confirm'); setShowModal(true); modalCallbackRef.current = cb; };
+    const handleModalConfirm = () => { if (modalCallbackRef.current) modalCallbackRef.current(); };
+    const handleModalCancel = () => { setShowModal(false); modalCallbackRef.current = null; };
+
+    // Auth
+    const handleLogin = () => {
+      if (loginPassword && currentPassword && loginPassword === currentPassword) { setIsLoggedIn(true); setLoginMessage(''); }
+      else setLoginMessage('Password salah.');
+    };
+
+    // CRUD pustakawan
+    const handleAddLibrarian = async () => {
+      const nama = (newLibrarianName||'').trim();
+      if (!nama) { customAlert('Input Salah', 'Nama tidak boleh kosong'); return; }
+      try { if (db) { const r = db.ref('pustakawan').push(); await r.set({ nama }); setNewLibrarianName(''); } } catch (e) { customAlert('Gagal', e.message || 'Gagal menambahkan'); }
+    };
+
+    const handleDeleteLibrarian = (id, nama) => {
+      customConfirm('Konfirmasi Hapus', `Hapus ${nama}? Semua jadwal & absensi akan dihapus.`, async () => {
+        try {
+          if (!db) return;
+          const updates = {};
+          for (const day of HARI_ORDER) {
+            const dayRef = await db.ref(`jadwal/${day}`).once('value');
+            if (dayRef.exists()) {
+              dayRef.forEach(shiftSnap => { if (shiftSnap.hasChild(id)) updates[`/jadwal/${day}/${shiftSnap.key}/${id}`] = null; });
+            }
+          }
+          const allAttendanceSnap = await db.ref('absensi').once('value');
+          if (allAttendanceSnap.exists()) {
+            allAttendanceSnap.forEach(dateSnap => { if (dateSnap.hasChild(id)) updates[`/absensi/${dateSnap.key}/${id}`] = null; });
+          }
+          updates[`/pustakawan/${id}`] = null;
+          await db.ref('/').update(updates);
+          setShowModal(false);
+          customAlert('Sukses', 'Pustakawan dihapus.');
+        } catch (e) {
+          customAlert('Gagal', e.message || 'Gagal menghapus');
+        }
+      });
+    };
+
+    // Jadwal helpers
+    const handleDayChange = (e) => {
+      const { value, checked } = e.target;
+      if (checked) setCheckedDays(prev => [...prev, value]);
+      else setCheckedDays(prev => prev.filter(d => d !== value));
+    };
+
+    const handleSaveSchedule = async () => {
+      if (!selectedLibrarianId) { customAlert('Pilih Nama', 'Pilih pustakawan terlebih dahulu'); return; }
+      if (checkedDays.length === 0) { customAlert('Pilih Hari', 'Centang minimal 1 hari'); return; }
+      try {
+        const updates = {};
+        checkedDays.forEach(day => updates[`/jadwal/${day}/${selectedShift}/${selectedLibrarianId}`] = true);
+        await db.ref('/').update(updates);
+        setCheckedDays([]); customAlert('Sukses', 'Jadwal disimpan.');
+      } catch (e) { customAlert('Gagal', e.message || 'Gagal menyimpan jadwal'); }
+    };
+
+    // Change password
+    const handleChangeAdminPassword = async () => {
+      const p = (newAdminPassword||'').trim();
+      if (!p) { setPasswordMessage('Password baru tidak boleh kosong'); return; }
+      try { await db.ref('admin/password').set(p); setNewAdminPassword(''); setPasswordMessage('Password berhasil diganti'); }
+      catch (e) { setPasswordMessage('Gagal ganti password: ' + (e.message||'')); }
+    };
+
+    // unmark attendance
+    const handleUnmarkAttendance = (date, librarianId, shiftToUnmark) => {
+      customConfirm('Batalkan Absensi', `Batalkan absensi ${nameMap[librarianId]} pada ${date} (${TitleCase(shiftToUnmark)})?`, async () => {
+        try { await db.ref(`absensi/${date}/${librarianId}/${shiftToUnmark}`).remove(); setShowModal(false); customAlert('Berhasil', 'Absensi dibatalkan'); }
+        catch (e) { customAlert('Gagal', e.message || 'Gagal membatalkan'); }
+      });
+    };
+
+    // delete all attendance
+    const handleDeleteAllAttendance = () => {
+      customConfirm('Hapus Semua Absensi', 'Hapus semua data absensi? Tindakan tidak dapat dibatalkan.', async () => {
+        try { await db.ref('absensi').remove(); setShowModal(false); customAlert('Sukses', 'Semua data absensi dihapus'); }
+        catch (e) { customAlert('Gagal', e.message || 'Gagal menghapus'); }
+      });
+    };
+
+    // render content berdasarkan currentView
+    const renderContent = () => {
+      switch (currentView) {
+        case 'dashboard': return <Dashboard librarians={librarians} totalAttendanceStats={totalAttendanceStats} />;
+        case 'librarians': return <LibrarianManagement librarians={librarians} handleAddLibrarian={handleAddLibrarian} handleDeleteLibrarian={handleDeleteLibrarian} newLibrarianName={newLibrarianName} setNewLibrarianName={setNewLibrarianName} />;
+        case 'schedules': return <ScheduleManagement librarians={librarians} nameMap={nameMap} selectedLibrarianId={selectedLibrarianId} setSelectedLibrarianId={setSelectedLibrarianId} selectedShift={selectedShift} setSelectedShift={setSelectedShift} checkedDays={checkedDays} setCheckedDays={setCheckedDays} handleDayChange={handleDayChange} handleSaveSchedule={handleSaveSchedule} schedules={schedules} rawSchedules={rawSchedules} />;
+        case 'attendance': return <AttendanceReports librarians={librarians} nameMap={nameMap} selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth} selectedYear={selectedYear} setSelectedYear={setSelectedYear} allRawAttendanceData={allRawAttendanceData} rawSchedules={rawSchedules} selectedLibrarianForDetails={selectedLibrarianForDetails} setSelectedLibrarianForDetails={setSelectedLibrarianForDetails} handleUnmarkAttendance={handleUnmarkAttendance} years={years} months={months} />;
+        case 'overallStats': return <OverallStats librarians={librarians} totalAttendanceStats={totalAttendanceStats} />;
+        case 'adminSettings': return <AdminSettings newAdminPassword={newAdminPassword} setNewAdminPassword={setNewAdminPassword} handleChangeAdminPassword={handleChangeAdminPassword} passwordMessage={passwordMessage} handleDeleteAllAttendance={handleDeleteAllAttendance} />;
+        default: return <Dashboard librarians={librarians} totalAttendanceStats={totalAttendanceStats} />;
+      }
+    };
+
+    // small logout
+    const logout = () => { setIsLoggedIn(false); setLoginPassword(''); setCurrentView('dashboard'); };
+
+    // layout: jika belum login tampilkan form login
+    if (!isLoggedIn) {
+      return (
+        <div className="min-h-screen flex items-center justify-center p-6">
+          <div className="w-full max-w-md bg-white p-6 rounded-xl shadow">
+            <h1 className="text-2xl font-bold mb-4">Admin Absensi — Login</h1>
+            <input type="password" placeholder="Password admin" className="w-full p-3 border rounded mb-3" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleLogin()} />
+            <div className="flex gap-3">
+              <button onClick={handleLogin} className="flex-1 px-4 py-3 bg-teal-600 text-white rounded">Login</button>
+              <button onClick={() => { setLoginPassword(''); }} className="px-4 py-3 border rounded">Reset</button>
+            </div>
+            {loginMessage && <div className="text-sm text-red-600 mt-3">{loginMessage}</div>}
+            <div className="text-xs text-gray-500 mt-4">Jika belum ada password, periksa node <code>admin/password</code> di Realtime Database.</div>
+          </div>
+        </div>
+      );
+    }
+
+    // tampilan aplikasi dengan sidebar + header
+    return (
+      <div className="min-h-screen flex">
+        {/* Sidebar */}
+        <aside className="w-72 bg-white border-r shadow-sm flex flex-col">
+          <div className="h-20 flex items-center px-6 border-b">
+            <div>
+              <div className="text-2xl font-bold text-teal-700">Absensi</div>
+              <div className="text-xs text-gray-500">Panel Admin</div>
+            </div>
+          </div>
+
+          <nav className="flex-1 p-4 space-y-2 overflow-auto">
+            <SidebarButton active={currentView==='dashboard'} onClick={() => setCurrentView('dashboard')} icon="layout-dashboard" label="Dashboard" />
+            <SidebarButton active={currentView==='librarians'} onClick={() => setCurrentView('librarians')} icon="users" label="Pustakawan" />
+            <SidebarButton active={currentView==='schedules'} onClick={() => setCurrentView('schedules')} icon="calendar-clock" label="Jadwal" />
+            <SidebarButton active={currentView==='attendance'} onClick={() => setCurrentView('attendance')} icon="check-square" label="Absensi Bulanan" />
+            <SidebarButton active={currentView==='overallStats'} onClick={() => setCurrentView('overallStats')} icon="bar-chart-3" label="Total Statistik" />
+            <SidebarButton active={currentView==='adminSettings'} onClick={() => setCurrentView('adminSettings')} icon="settings" label="Pengaturan Admin" />
+          </nav>
+
+          <div className="p-4 border-t">
+            <div className="text-sm text-gray-600 mb-2">Masuk sebagai: <span className="font-medium">admin</span></div>
+            <button onClick={logout} className="w-full px-3 py-2 bg-red-600 text-white rounded">Logout</button>
+          </div>
+        </aside>
+
+        {/* Main */}
+        <main className="flex-1 p-6">
+          <header className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-semibold capitalize">{currentView === 'dashboard' ? 'Dashboard' : currentView === 'librarians' ? 'Pustakawan' : currentView === 'schedules' ? 'Jadwal' : currentView === 'attendance' ? 'Absensi Bulanan' : currentView === 'overallStats' ? 'Total Statistik' : 'Pengaturan Admin'}</h2>
+              <div className="text-sm text-gray-500">Kelola data pustakawan, jadwal, dan laporan absensi</div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-gray-500">{new Date().toLocaleDateString('id-ID')}</div>
+              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">A</div>
+            </div>
+          </header>
+
+          <div className="space-y-6">
+            { renderContent() }
+          </div>
+        </main>
+
+        <Modal show={showModal} title={modalTitle} message={modalMessage} onConfirm={handleModalConfirm} onCancel={handleModalCancel} type={modalType} />
+      </div>
+    );
+  };
+
+  // kecil: SidebarButton component
+  const SidebarButton = ({ active, onClick, icon, label }) => (
+    <button onClick={onClick} className={`group w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${active ? 'bg-teal-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}>
+      <i className={`lucide lucide-${icon} ${active ? 'text-white' : 'text-gray-500'}`}></i>
+      <span className="font-medium">{label}</span>
+    </button>
+  );
+
+  // render app
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<App />);
+  </script>
 </body>
 </html>
+
