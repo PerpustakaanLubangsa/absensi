@@ -21,6 +21,8 @@
             --yellow:#ffc107; /* Warning yellow for Sakit */
             --gray:#6c757d; /* Gray for Alpha */
             --blue: #0d6efd; /* Blue for info */
+            --light-gray: #f0f0f0; /* New: for 'Belum diabsen' status */
+            --dark-gray: #333; /* New: for 'Belum diabsen' text */
         }
         *{box-sizing:border-box}
         body{font-family:Arial,Helvetica,sans-serif;margin:18px;color:var(--b); background-color: #f8fafc;}
@@ -46,6 +48,7 @@
         .librarian-item.recorded-izin { border-color: var(--orange); }
         .librarian-item.recorded-sakit { border-color: var(--yellow); }
         .librarian-item.recorded-alpha { border-color: var(--red); }
+        .librarian-item.recorded-none { border-color: var(--light-gray); } /* New style for 'Belum diabsen' */
 
 
         .librarian-info { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
@@ -62,7 +65,7 @@
         .status-display.izin { color: var(--orange); }
         .status-display.sakit { color: var(--yellow); }
         .status-display.alpha { color: var(--red); }
-        .status-display i { margin-right: 5px; }
+        .status-display.none { color: var(--dark-gray); font-weight: normal; font-size: 0.9em; } /* New style for 'Belum diabsen' text */
 
 
         .action-buttons {
@@ -97,6 +100,7 @@
         .btn-sakit:hover { background-color: #e0a800; }
         .btn-alpha { background-color: var(--gray); }
         .btn-alpha:hover { background-color: #5a6268; }
+
 
         /* Styles for the "active" button indicating current status */
         .action-buttons button.active {
@@ -191,8 +195,8 @@
             const now = new Date();
             const dayOfWeek = HARI_MAP[now.getDay()]; // 0=Minggu, 1=Senin...
             const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
-            const hour = now.getHours();
-            const minute = now.getMinutes();
+            // const hour = now.getHours(); // Not directly used in shift detection logic anymore
+            // const minute = now.getMinutes(); // Not directly used in shift detection logic anymore
 
             let shift = null;
             let shiftDisplay = 'Di luar jam shift absensi'; // Default message
@@ -331,8 +335,8 @@
                     item.innerHTML = `
                         <div class="librarian-info">
                             <span class="librarian-name">${nama}</span>
-                            <span class="status-display ${recordedStatus || ''}">
-                                ${isRecorded ? `<i class="${getIconClass(recordedStatus)}"></i> ${TitleCase(recordedStatus)} ${getFormattedTime(recordedTime)}` : ''}
+                            <span class="status-display ${recordedStatus || 'none'}">
+                                ${isRecorded ? `<i class="${getIconClass(recordedStatus)}"></i> ${TitleCase(recordedStatus)} ${getFormattedTime(recordedTime)}` : 'Belum diabsen'}
                             </span>
                         </div>
                         <div class="action-buttons">
@@ -355,6 +359,9 @@
                             item.classList.add(`recorded-${recordedStatus}`); // Add class to parent for border
                         } else {
                             button.classList.remove('active');
+                            if (!isRecorded) {
+                                item.classList.add('recorded-none'); // Add a class for 'Belum diabsen' state
+                            }
                         }
                     });
                 });
