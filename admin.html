@@ -241,30 +241,49 @@
   );
 
   const AttendanceReports = ({ librarians, nameMap, selectedMonth, setSelectedMonth, selectedYear, setSelectedYear, allRawAttendanceData, rawSchedules, selectedLibrarianForDetails, setSelectedLibrarianForDetails, handleUnmarkAttendance, years, months }) => {
-    // fungsi pembantu untuk tampilan detail (mengikuti logika Anda)
+    // fungsi pembantu untuk tampilan detail
     const getDetailedLibrarianAttendance = () => {
       if (!selectedLibrarianForDetails) return [];
       const data = [];
-      const targetMonth = parseInt(selectedMonth,10);
-      const targetYear = parseInt(selectedYear,10);
-      const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dateString = `${targetYear}-${String(targetMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        const dateObj = new Date(dateString);
-        if (isNaN(dateObj)) continue;
-        const dayOfWeek = HARI_ORDER[dateObj.getDay()];
+      const targetMonth = parseInt(selectedMonth, 10);
+      const targetYear = parseInt(selectedYear, 10);
+      const startOfMonth = new Date(targetYear, targetMonth - 1, 1);
+      const endOfMonth = new Date(targetYear, targetMonth, 0);
+
+      // Filter data absensi mentah untuk bulan/tahun yang dipilih
+      const allDatesWithAttendance = Object.keys(allRawAttendanceData).filter(dateStr => {
+        const date = new Date(dateStr);
+        return date >= startOfMonth && date <= endOfMonth;
+      });
+
+      allDatesWithAttendance.sort((a,b) => new Date(a) - new Date(b)); // Urutkan tanggal
+
+      allDatesWithAttendance.forEach(dateString => {
         const dailyRecords = allRawAttendanceData[dateString] || {};
         const librarianDailyAttendance = dailyRecords[selectedLibrarianForDetails] || {};
-        const scheduledShifts = [];
-        if (rawSchedules?.[dayOfWeek]?.['siang']?.[selectedLibrarianForDetails]) scheduledShifts.push('siang');
-        if (rawSchedules?.[dayOfWeek]?.['malam']?.[selectedLibrarianForDetails]) scheduledShifts.push('malam');
-        scheduledShifts.forEach(shift => {
+
+        // Hanya tambahkan data jika ada catatan absensi untuk pustakawan ini pada tanggal ini
+        // dan pastikan ada status yang tercatat (bukan undefined/null)
+        Object.keys(librarianDailyAttendance).forEach(shift => {
           const record = librarianDailyAttendance[shift];
-          let status = 'Alpha', time = '';
-          if (record) { status = TitleCase(record.status); time = getFormattedTime(record.time || record.timestamp || record.tanggal || record.ts); }
-          data.push({ id: `${dateString}-${shift}`, date: dateString, day: TitleCase(dayOfWeek), shift: TitleCase(shift), status, time, librarianId: selectedLibrarianForDetails, shiftKey: shift });
+          if (record && record.status) { // Pastikan record dan status ada
+            const dateObj = new Date(dateString);
+            const dayOfWeek = HARI_ORDER[dateObj.getDay()];
+            const status = TitleCase(record.status);
+            const time = getFormattedTime(record.time);
+            data.push({
+              id: `${dateString}-${shift}`, // ID unik untuk setiap baris
+              date: dateString,
+              day: TitleCase(dayOfWeek),
+              shift: TitleCase(shift),
+              status: status,
+              time: time,
+              librarianId: selectedLibrarianForDetails,
+              shiftKey: shift
+            });
+          }
         });
-      }
+      });
       return data;
     };
 
@@ -291,9 +310,9 @@
                 <div>
                   <button onClick={() => setSelectedLibrarianForDetails(null)} className="text-teal-600 hover:underline">&larr; Kembali</button>
                   <h4 className="text-lg font-semibold mt-2">{nameMap[selectedLibrarianForDetails]}</h4>
-                  <div className="text-xs text-gray-500">{selectedMonth}/{selectedYear}</div>
+                  <div className="text-xs text-gray-500">{getMonthName(selectedMonth)} {selectedYear}</div> {/* Update tampilan bulan/tahun */}
                 </div>
-                <div className="text-sm text-gray-500">Ringkasan detail</div>
+                {/* <div className="text-sm text-gray-500">Ringkasan detail</div> <!-- Bisa dihapus jika tidak perlu ringkasan di sini --> */}
               </div>
 
               <div className="overflow-x-auto">
@@ -309,7 +328,7 @@
                   </thead>
                   <tbody>
                     {monthlyAbsenceData.length === 0 ? (
-                      <tr><td colSpan="5" className="py-4 text-center text-gray-500">Tidak ada catatan absensi pada bulan ini.</td></tr>
+                      <tr><td colSpan="5" className="py-4 text-center text-gray-500">Tidak ada catatan absensi pada bulan ini untuk pustakawan ini.</td></tr>
                     ) : monthlyAbsenceData.map(rec => (
                       <tr key={rec.id} className="border-t">
                         <td className="py-2 pr-4">{getFormattedDate(rec.date)}</td>
@@ -317,7 +336,8 @@
                         <td className="py-2 pr-4">{rec.shift}</td>
                         <td className="py-2 pr-4">{rec.status} {rec.time}</td>
                         <td className="py-2 pr-4">
-                          {rec.status !== 'Alpha' && (<button onClick={() => handleUnmarkAttendance(rec.date, rec.librarianId, rec.shiftKey)} className="px-3 py-1 text-xs bg-red-50 text-red-700 rounded">Batal</button>)}
+                          {/* Tombol batal hanya muncul jika status bukan "Alpha" yang dihasilkan sistem (karena kita tidak lagi menggenerates alpha otomatis) */}
+                          <button onClick={() => handleUnmarkAttendance(rec.date, rec.librarianId, rec.shiftKey)} className="px-3 py-1 text-xs bg-red-50 text-red-700 rounded">Batal</button>
                         </td>
                       </tr>
                     ))}
@@ -521,21 +541,22 @@
         for (const dateString in all) {
           const dateObj = new Date(dateString);
           if (isNaN(dateObj)) continue;
-          const dayOfWeek = HARI_ORDER[dateObj.getDay()];
+          // const dayOfWeek = HARI_ORDER[dateObj.getDay()]; // Tidak lagi digunakan untuk menghitung alpha otomatis
+
           const daily = all[dateString];
           for (const libId of Object.keys(calc)) {
             const libDaily = daily?.[libId] || {};
-            const libScheduleDay = allSchedules?.[dayOfWeek] || {};
-            const scheduledShifts = [];
-            if (libScheduleDay['siang']?.[libId]) scheduledShifts.push('siang');
-            if (libScheduleDay['malam']?.[libId]) scheduledShifts.push('malam');
-            scheduledShifts.forEach(shift => {
-              const record = libDaily[shift];
-              if (record && record.status) {
-                calc[libId][record.status] = (calc[libId][record.status]||0) + 1;
-              } else {
-                calc[libId]['alpha'] = (calc[libId]['alpha']||0) + 1;
-              }
+            // const libScheduleDay = allSchedules?.[dayOfWeek] || {}; // Tidak lagi digunakan untuk menghitung alpha otomatis
+            // const scheduledShifts = []; // Tidak lagi digunakan untuk menghitung alpha otomatis
+            // if (libScheduleDay['siang']?.[libId]) scheduledShifts.push('siang');
+            // if (libScheduleDay['malam']?.[libId]) scheduledShifts.push('malam');
+
+            // Hitung statistik hanya dari catatan yang ada (hadir, izin, sakit, alpha)
+            Object.keys(libDaily).forEach(shift => {
+                const record = libDaily[shift];
+                if (record && record.status) {
+                    calc[libId][record.status] = (calc[libId][record.status] || 0) + 1;
+                }
             });
           }
         }
@@ -543,7 +564,7 @@
       });
 
       return () => absRef.off('value', onAll);
-    }, [db, librarians]);
+    }, [db, librarians]); // Tambahkan `librarians` sebagai dependency karena digunakan di dalam efek
 
     // Modal helpers
     const customAlert = (title, message) => { setModalTitle(title); setModalMessage(message); setModalType('alert'); setShowModal(true); modalCallbackRef.current = () => setShowModal(false); };
@@ -729,4 +750,3 @@
   </script>
 </body>
 </html>
-
