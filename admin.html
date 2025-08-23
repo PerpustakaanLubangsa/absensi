@@ -51,14 +51,15 @@
   // ----------------------
   // Modal (tetap seperti semula, sedikit styling)
   // ----------------------
-  const Modal = ({ show, title, message, onConfirm, onCancel, type }) => {
+  const Modal = ({ show, title, message, onConfirm, onCancel, type, children }) => {
     if (!show) return null;
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
         <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6">
           <h3 className="text-lg font-semibold mb-3">{title}</h3>
           <p className="text-sm text-gray-600 mb-6">{message}</p>
-          <div className="flex justify-end gap-3">
+          {children}
+          <div className="flex justify-end gap-3 mt-4">
             {type === 'confirm' && (
               <button onClick={onCancel} className="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200">Batal</button>
             )}
@@ -70,6 +71,32 @@
       </div>
     );
   };
+
+  const ChangeStatusModal = ({ show, onConfirm, onCancel, initialStatus, onStatusChange }) => {
+    if (!show) return null;
+    const [selectedStatus, setSelectedStatus] = useState(initialStatus);
+
+    return (
+      <Modal show={show} title="Ubah Status Absensi" message={`Pilih status baru untuk absensi ini:`} type="confirm" onConfirm={() => onConfirm(selectedStatus)} onCancel={onCancel}>
+        <div className="space-y-2">
+          {['hadir', 'izin', 'sakit', 'alpha'].map(status => (
+            <label key={status} className="flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-gray-100">
+              <input
+                type="radio"
+                name="status"
+                value={status}
+                checked={selectedStatus === status}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="h-4 w-4 text-teal-600 focus:ring-teal-500"
+              />
+              <span className="capitalize">{TitleCase(status)}</span>
+            </label>
+          ))}
+        </div>
+      </Modal>
+    );
+  };
+
 
   // ----------------------
   // Utilities (sama seperti Anda)
@@ -240,7 +267,7 @@
     </div>
   );
 
-  const AttendanceReports = ({ librarians, nameMap, selectedMonth, setSelectedMonth, selectedYear, setSelectedYear, allRawAttendanceData, rawSchedules, selectedLibrarianForDetails, setSelectedLibrarianForDetails, handleUnmarkAttendance, years, months }) => {
+  const AttendanceReports = ({ librarians, nameMap, selectedMonth, setSelectedMonth, selectedYear, setSelectedYear, allRawAttendanceData, rawSchedules, selectedLibrarianForDetails, setSelectedLibrarianForDetails, handleUnmarkAttendance, handleUpdateAttendance, years, months }) => {
     // fungsi pembantu untuk tampilan detail
     const getDetailedLibrarianAttendance = () => {
       if (!selectedLibrarianForDetails) return [];
@@ -279,7 +306,8 @@
               status: status,
               time: time,
               librarianId: selectedLibrarianForDetails,
-              shiftKey: shift
+              shiftKey: shift,
+              rawStatus: record.status // Tambahkan status mentah untuk fungsionalitas edit
             });
           }
         });
@@ -312,7 +340,6 @@
                   <h4 className="text-lg font-semibold mt-2">{nameMap[selectedLibrarianForDetails]}</h4>
                   <div className="text-xs text-gray-500">{getMonthName(selectedMonth)} {selectedYear}</div> {/* Update tampilan bulan/tahun */}
                 </div>
-                {/* <div className="text-sm text-gray-500">Ringkasan detail</div> <!-- Bisa dihapus jika tidak perlu ringkasan di sini --> */}
               </div>
 
               <div className="overflow-x-auto">
@@ -324,11 +351,12 @@
                       <th className="py-2 pr-4">Shift</th>
                       <th className="py-2 pr-4">Keterangan</th>
                       <th className="py-2 pr-4">Aksi</th>
+                      <th className="py-2 pr-4"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {monthlyAbsenceData.length === 0 ? (
-                      <tr><td colSpan="5" className="py-4 text-center text-gray-500">Tidak ada catatan absensi pada bulan ini untuk pustakawan ini.</td></tr>
+                      <tr><td colSpan="6" className="py-4 text-center text-gray-500">Tidak ada catatan absensi pada bulan ini untuk pustakawan ini.</td></tr>
                     ) : monthlyAbsenceData.map(rec => (
                       <tr key={rec.id} className="border-t">
                         <td className="py-2 pr-4">{getFormattedDate(rec.date)}</td>
@@ -336,7 +364,9 @@
                         <td className="py-2 pr-4">{rec.shift}</td>
                         <td className="py-2 pr-4">{rec.status} {rec.time}</td>
                         <td className="py-2 pr-4">
-                          {/* Tombol batal hanya muncul jika status bukan "Alpha" yang dihasilkan sistem (karena kita tidak lagi menggenerates alpha otomatis) */}
+                            <button onClick={() => handleUpdateAttendance(rec.date, rec.librarianId, rec.shiftKey, rec.rawStatus)} className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded">Ubah</button>
+                        </td>
+                        <td className="py-2 pr-4">
                           <button onClick={() => handleUnmarkAttendance(rec.date, rec.librarianId, rec.shiftKey)} className="px-3 py-1 text-xs bg-red-50 text-red-700 rounded">Batal</button>
                         </td>
                       </tr>
@@ -363,6 +393,71 @@
       </div>
     );
   };
+
+  const AlphaRecap = ({ allRawAttendanceData, nameMap }) => {
+    const [alphaRecords, setAlphaRecords] = useState([]);
+
+    useEffect(() => {
+      const records = [];
+      for (const dateString in allRawAttendanceData) {
+        const dailyRecords = allRawAttendanceData[dateString];
+        for (const librarianId in dailyRecords) {
+          const librarianDailyAttendance = dailyRecords[librarianId];
+          for (const shift in librarianDailyAttendance) {
+            const record = librarianDailyAttendance[shift];
+            if (record && record.status === 'alpha') {
+              records.push({
+                date: dateString,
+                librarianId: librarianId,
+                librarianName: nameMap[librarianId] || '(Tidak Ditemukan)',
+                shift: TitleCase(shift),
+                time: getFormattedTime(record.time)
+              });
+            }
+          }
+        }
+      }
+      // Sort by date, then by librarian name, then by shift
+      records.sort((a, b) => {
+        if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
+        if (a.librarianName !== b.librarianName) return a.librarianName.localeCompare(b.librarianName);
+        return a.shift.localeCompare(b.shift);
+      });
+      setAlphaRecords(records);
+    }, [allRawAttendanceData, nameMap]);
+
+    return (
+      <Card title="Rekap Pustakawan Alpha">
+        {alphaRecords.length === 0 ? (
+          <Empty text="Tidak ada catatan alpha ditemukan." />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="text-left text-xs text-gray-500 uppercase">
+                <tr>
+                  <th className="py-2 pr-4">Nama Pustakawan</th>
+                  <th className="py-2 pr-4">Tanggal</th>
+                  <th className="py-2 pr-4">Shift</th>
+                  <th className="py-2 pr-4">Waktu Tercatat</th>
+                </tr>
+              </thead>
+              <tbody>
+                {alphaRecords.map((rec, index) => (
+                  <tr key={index} className="border-t">
+                    <td className="py-2 pr-4 font-medium">{rec.librarianName}</td>
+                    <td className="py-2 pr-4">{getFormattedDate(rec.date)}</td>
+                    <td className="py-2 pr-4">{rec.shift}</td>
+                    <td className="py-2 pr-4">{rec.time}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    );
+  };
+
 
   const OverallStats = ({ librarians, totalAttendanceStats }) => (
     <Card title="Statistik Absensi (Total)">
@@ -456,6 +551,8 @@
     const [modalMessage, setModalMessage] = useState('');
     const [modalType, setModalType] = useState('alert');
     const modalCallbackRef = useRef(null);
+    const [showChangeStatusModal, setShowChangeStatusModal] = useState(false);
+    const [editData, setEditData] = useState(null);
 
     // years/months untuk select
     const years = Array.from({length: 10}, (_, i) => (currentYear - 5 + i).toString());
@@ -643,7 +740,29 @@
         catch (e) { customAlert('Gagal', e.message || 'Gagal membatalkan'); }
       });
     };
+    
+    // new: update attendance
+    const handleUpdateAttendance = (date, librarianId, shift, initialStatus) => {
+      setEditData({ date, librarianId, shift, initialStatus });
+      setShowChangeStatusModal(true);
+    };
 
+    const handleConfirmUpdate = async (newStatus) => {
+      if (!editData) return;
+      const { date, librarianId, shift } = editData;
+      try {
+        const attendanceRef = db.ref(`absensi/${date}/${librarianId}/${shift}`);
+        await attendanceRef.update({
+          status: newStatus,
+          // Opsional: Anda dapat memperbarui waktu jika diperlukan, tapi untuk kasus ini biarkan saja
+        });
+        setShowChangeStatusModal(false);
+        customAlert('Sukses', 'Status absensi berhasil diubah.');
+      } catch (e) {
+        customAlert('Gagal', 'Gagal mengubah status absensi: ' + (e.message || ''));
+      }
+    };
+    
     // delete all attendance
     const handleDeleteAllAttendance = () => {
       customConfirm('Hapus Semua Absensi', 'Hapus semua data absensi? Tindakan tidak dapat dibatalkan.', async () => {
@@ -658,7 +777,8 @@
         case 'dashboard': return <Dashboard librarians={librarians} totalAttendanceStats={totalAttendanceStats} />;
         case 'librarians': return <LibrarianManagement librarians={librarians} handleAddLibrarian={handleAddLibrarian} handleDeleteLibrarian={handleDeleteLibrarian} newLibrarianName={newLibrarianName} setNewLibrarianName={setNewLibrarianName} />;
         case 'schedules': return <ScheduleManagement librarians={librarians} nameMap={nameMap} selectedLibrarianId={selectedLibrarianId} setSelectedLibrarianId={setSelectedLibrarianId} selectedShift={selectedShift} setSelectedShift={setSelectedShift} checkedDays={checkedDays} setCheckedDays={setCheckedDays} handleDayChange={handleDayChange} handleSaveSchedule={handleSaveSchedule} schedules={schedules} rawSchedules={rawSchedules} />;
-        case 'attendance': return <AttendanceReports librarians={librarians} nameMap={nameMap} selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth} selectedYear={selectedYear} setSelectedYear={setSelectedYear} allRawAttendanceData={allRawAttendanceData} rawSchedules={rawSchedules} selectedLibrarianForDetails={selectedLibrarianForDetails} setSelectedLibrarianForDetails={setSelectedLibrarianForDetails} handleUnmarkAttendance={handleUnmarkAttendance} years={years} months={months} />;
+        case 'attendance': return <AttendanceReports librarians={librarians} nameMap={nameMap} selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth} selectedYear={selectedYear} setSelectedYear={setSelectedYear} allRawAttendanceData={allRawAttendanceData} rawSchedules={rawSchedules} selectedLibrarianForDetails={selectedLibrarianForDetails} setSelectedLibrarianForDetails={setSelectedLibrarianForDetails} handleUnmarkAttendance={handleUnmarkAttendance} handleUpdateAttendance={handleUpdateAttendance} years={years} months={months} />;
+        case 'alphaRecap': return <AlphaRecap allRawAttendanceData={allRawAttendanceData} nameMap={nameMap} />;
         case 'overallStats': return <OverallStats librarians={librarians} totalAttendanceStats={totalAttendanceStats} />;
         case 'adminSettings': return <AdminSettings newAdminPassword={newAdminPassword} setNewAdminPassword={setNewAdminPassword} handleChangeAdminPassword={handleChangeAdminPassword} passwordMessage={passwordMessage} handleDeleteAllAttendance={handleDeleteAllAttendance} />;
         default: return <Dashboard librarians={librarians} totalAttendanceStats={totalAttendanceStats} />;
@@ -703,6 +823,7 @@
             <SidebarButton active={currentView==='librarians'} onClick={() => setCurrentView('librarians')} icon="users" label="Pustakawan" />
             <SidebarButton active={currentView==='schedules'} onClick={() => setCurrentView('schedules')} icon="calendar-clock" label="Jadwal" />
             <SidebarButton active={currentView==='attendance'} onClick={() => setCurrentView('attendance')} icon="check-square" label="Absensi Bulanan" />
+            <SidebarButton active={currentView==='alphaRecap'} onClick={() => setCurrentView('alphaRecap')} icon="calendar-x" label="Rekap Alpha" /> {/* New button */}
             <SidebarButton active={currentView==='overallStats'} onClick={() => setCurrentView('overallStats')} icon="bar-chart-3" label="Total Statistik" />
             <SidebarButton active={currentView==='adminSettings'} onClick={() => setCurrentView('adminSettings')} icon="settings" label="Pengaturan Admin" />
           </nav>
@@ -717,7 +838,15 @@
         <main className="flex-1 p-6">
           <header className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-semibold capitalize">{currentView === 'dashboard' ? 'Dashboard' : currentView === 'librarians' ? 'Pustakawan' : currentView === 'schedules' ? 'Jadwal' : currentView === 'attendance' ? 'Absensi Bulanan' : currentView === 'overallStats' ? 'Total Statistik' : 'Pengaturan Admin'}</h2>
+              <h2 className="text-2xl font-semibold capitalize">
+                {currentView === 'dashboard' ? 'Dashboard' :
+                 currentView === 'librarians' ? 'Pustakawan' :
+                 currentView === 'schedules' ? 'Jadwal' :
+                 currentView === 'attendance' ? 'Absensi Bulanan' :
+                 currentView === 'alphaRecap' ? 'Rekap Alpha' : // New title
+                 currentView === 'overallStats' ? 'Total Statistik' :
+                 'Pengaturan Admin'}
+              </h2>
               <div className="text-sm text-gray-500">Kelola data pustakawan, jadwal, dan laporan absensi</div>
             </div>
             <div className="flex items-center gap-4">
@@ -732,6 +861,12 @@
         </main>
 
         <Modal show={showModal} title={modalTitle} message={modalMessage} onConfirm={handleModalConfirm} onCancel={handleModalCancel} type={modalType} />
+        <ChangeStatusModal
+          show={showChangeStatusModal}
+          initialStatus={editData?.initialStatus}
+          onConfirm={handleConfirmUpdate}
+          onCancel={() => setShowChangeStatusModal(false)}
+        />
       </div>
     );
   };
