@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi Pustakawan | Drag & Drop Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #eef2ff; /* blue-50 */
+        }
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 4px, 0, 0.05);
+        }
+        
+        /* Drag & Drop Styles */
+        .draggable-item {
+            cursor: grab;
+            border-left: 5px solid; 
+            transition: opacity 0.2s;
+            border-color: #3b82f6; /* Default Blue */
+        }
+        .draggable-item:active {
+            cursor: grabbing;
+        }
+        /* Style border untuk item yang sudah di-drop */
+        .item-hadir { border-color: #10b981; }
+        .item-izin { border-color: #fbbf24; }
+        .item-alpha { border-color: #ef4444; }
+
+        .dropzone {
+            min-height: 150px;
+            padding: 10px;
+            border: 2px dashed;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .dropzone.drag-over-hadir { background-color: #d1fae5; border-color: #10b981; }
+        .dropzone.drag-over-izin { background-color: #fffbeb; border-color: #fbbf24; }
+        .dropzone.drag-over-alpha { background-color: #fee2e2; border-color: #ef4444; }
+
+        /* Style kustom untuk badge status */
+        .status-hadir-bg { background-color: #10b981; color: white; }
+        .status-izin-bg { background-color: #fbbf24; color: #78350f; }
+        .status-alpha-bg { background-color: #ef4444; color: white; }
+
+        /* Floating Button Admin */
+        .admin-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: background-color 0.3s, transform 0.1s;
+            z-index: 100;
+        }
+        .admin-button:hover {
+            background-color: #2563eb; /* blue-600 */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container" class="min-h-screen flex flex-col items-center justify-center p-4">
+
+        <header class="w-full max-w-4xl mb-6 text-center">
+            <h1 class="text-5xl font-extrabold text-gray-800 mb-0" id="real-time-clock">00:00:00</h1>
+            <p class="text-xl font-semibold text-gray-500 mt-1" id="today-display">Loading...</p>
+        </header>
+
+        <main id="main-attendance-view" class="w-full max-w-4xl">
+            
+            <div id="attendance-display" class="space-y-6">
+                </div>
+
+        </main>
+
+        <a href="admin.html" class="admin-button" title="Pergi ke Halaman Admin">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+        </a>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getDatabase, ref, get, update, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        // =================================================================
+        // KONFIGURASI FIREBASE (HARUS SAMA DENGAN ADMIN.HTML)
+        // =================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBb-hbcc_ZE2hH6dlc81HbIGMQi96y4qYI",
+            authDomain: "absensi-7ef83.firebaseapp.com",
+            databaseURL: "https://absensi-7ef83-default-rtdb.firebaseio.com",
+            projectId: "absensi-7ef83",
+            storageBucket: "absensi-7ef83.firebasestorage.app",
+            messagingSenderId: "661765044421",
+            appId: "1:661765044421:web:b8578a195a6d208dc4d8ac"
+        };
+        // =================================================================
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Element DOM
+        const todayDisplay = document.getElementById('today-display');
+        const attendanceDisplay = document.getElementById('attendance-display');
+        const realTimeClock = document.getElementById('real-time-clock');
+        
+        const DAYS_OF_WEEK = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        
+        // Window Absensi Aktif
+        const SHIFT_TIMES = {
+            pagi: {
+                name: 'Pagi',
+                timeRange: '08:00 - 11:00',
+                startCheckIn: 7 * 60,  // 07:00
+                endCheckIn: 12 * 60,   // 12:00
+            },
+            malam: {
+                name: 'Malam',
+                timeRange: '21:00 - 22:30',
+                startCheckIn: 20 * 60, // 20:00
+                endCheckIn: 23 * 60 + 30, // 23:30
+            }
+        };
+
+        // --- UTILITY FUNCTIONS ---
+        
+        function getTodayInfo() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const dayOfWeekIndex = now.getDay(); 
+            
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const todayFormatted = now.toLocaleDateString('id-ID', dateOptions);
+
+            return {
+                dateKey: `${year}-${month}-${day}`, // YYYY-MM-DD
+                dayName: DAYS_OF_WEEK[dayOfWeekIndex], 
+                formatted: todayFormatted
+            };
+        }
+
+        function updateRealTimeClock() {
+            const now = new Date();
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            const timeString = now.toLocaleTimeString('id-ID', timeOptions);
+            realTimeClock.textContent = timeString;
+            
+            // Perbarui tanggal hanya sekali per menit atau saat load
+            if (now.getSeconds() === 0 || todayDisplay.textContent === 'Loading...') {
+                todayDisplay.textContent = getTodayInfo().formatted;
+            }
+        }
+
+        function getCurrentActiveShifts() {
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            const currentTimeInMinutes = currentHour * 60 + currentMinute;
+            
+            const activeShifts = [];
+
+            if (currentTimeInMinutes >= SHIFT_TIMES.pagi.startCheckIn && currentTimeInMinutes < SHIFT_TIMES.pagi.endCheckIn) {
+                activeShifts.push({ key: 'pagi', ...SHIFT_TIMES.pagi });
+            }
+            
+            if (currentTimeInMinutes >= SHIFT_TIMES.malam.startCheckIn && currentTimeInMinutes < SHIFT_TIMES.malam.endCheckIn) {
+                activeShifts.push({ key: 'malam', ...SHIFT_TIMES.malam });
+            }
+            
+            return activeShifts; 
+        }
+
+        // Fungsi untuk merender satu item pustakawan
+        const renderLibrarianItemHtml = (lib, shiftKey) => {
+            const statusKey = lib.status.toLowerCase().replace(/\s/g, '');
+            const checkInTime = lib.checkIn ? new Date(lib.checkIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+
+            // Menambahkan ID unik untuk DOM manipulation
+            return `
+                <div data-librarian-id="${lib.librarianId}"
+                    data-shift-key="${shiftKey}"
+                    data-index="${lib.index}"
+                    data-librarian-name="${lib.name}"
+                    data-current-status="${lib.status}"
+                    id="card-${shiftKey}-${lib.index}"
+                    draggable="true"
+                    ondragstart="dragStart(event)"
+                    ondragend="dragEnd(event)"
+                    class="p-2 draggable-item rounded-md shadow-sm text-sm font-medium hover:bg-opacity-90 
+                           ${statusKey === 'belumabsen' ? 'bg-white border-blue-200' : `status-${statusKey}-bg item-${statusKey}`}">
+                    ${lib.name}
+                    ${lib.status === 'Hadir' ? `<span class="text-xs font-normal opacity-90 block">(${checkInTime})</span>` : ''}
+                </div>
+            `;
+        };
+
+        // Fungsi untuk mendapatkan ID container berdasarkan shift dan status
+        const getContainerId = (shiftKey, status) => `cards-container-${shiftKey}-${status.replace(/\s/g, '')}`;
+        
+        // --- DRAG AND DROP HANDLERS (GLOBAL) ---
+        
+        window.dragStart = (event) => {
+            const data = JSON.stringify({
+                librarianId: event.target.dataset.librarianId,
+                shiftKey: event.target.dataset.shiftKey,
+                index: event.target.dataset.index,
+                librarianName: event.target.dataset.librarianName
+            });
+            event.dataTransfer.setData('application/json', data);
+            event.dataTransfer.effectAllowed = 'move';
+            event.target.classList.add('opacity-50'); 
+        };
+        
+        window.dragEnd = (event) => {
+             event.target.classList.remove('opacity-50');
+        };
+        
+        window.dragOver = (event) => {
+            event.preventDefault(); 
+            event.dataTransfer.dropEffect = 'move';
+            
+            const targetStatus = event.target.closest('.dropzone')?.dataset.status.toLowerCase();
+            if (targetStatus) {
+                event.target.closest('.dropzone').classList.add(`drag-over-${targetStatus}`);
+            }
+        };
+
+        window.dragLeave = (event) => {
+            const dropzone = event.target.closest('.dropzone');
+            if (dropzone) {
+                 dropzone.classList.remove('drag-over-hadir', 'drag-over-izin', 'drag-over-alpha');
+            }
+        };
+
+        window.handleDrop = (event, status) => {
+            event.preventDefault();
+            
+            document.querySelectorAll('.dropzone').forEach(el => {
+                el.classList.remove('drag-over-hadir', 'drag-over-izin', 'drag-over-alpha');
+            });
+            
+            try {
+                const data = event.dataTransfer.getData('application/json');
+                if (!data) return;
+
+                const { librarianId, shiftKey, index, librarianName } = JSON.parse(data);
+                
+                handleStatusUpdate(shiftKey, status, index, librarianId, librarianName);
+            } catch (e) {
+                console.error("Gagal memproses drop:", e);
+                alert("Gagal memproses absensi. Data tidak valid.");
+            }
+        };
+        
+        // --- CORE ABSENCE LOGIC ---
+        
+        async function loadAndRenderAttendance() {
+            const todayInfo = getTodayInfo();
+            const activeShifts = getCurrentActiveShifts(); 
+            
+            attendanceDisplay.innerHTML = '';
+
+            if (!activeShifts || activeShifts.length === 0) {
+                attendanceDisplay.innerHTML = `
+                    <div class="text-center py-10 card bg-gray-100">
+                        <h3 class="text-xl font-bold text-gray-700 mb-2">Tidak ada Shift Aktif Saat Ini</h3>
+                        <p class="text-gray-500">Silakan datang kembali pada waktu absensi shift Pagi (07:00 - 12:00) atau shift Malam (20:00 - 23:30).</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const dailyScheduleRef = ref(db, `librarian_schedules/${todayInfo.dateKey}`);
+                let todaySchedule = (await get(dailyScheduleRef)).val();
+
+                // LOGIKA UTAMA: JIKA JADWAL HARI INI BELUM ADA, BUAT DARI TEMPLATE BERULANG
+                if (!todaySchedule) {
+                    const templateRef = ref(db, `recurring_templates/${todayInfo.dayName}`);
+                    const template = (await get(templateRef)).val();
+
+                    if (template && (template.pagi?.length > 0 || template.malam?.length > 0)) {
+                        const newSchedule = { pagi: template.pagi || [], malam: template.malam || [] };
+                        await set(dailyScheduleRef, newSchedule);
+                        todaySchedule = newSchedule;
+                    } else {
+                         todaySchedule = {};
+                    }
+                }
+                
+                // 2. Rendering
+                
+                let shiftsRendered = 0;
+                
+                activeShifts.forEach(shiftInfo => {
+                    const shiftKey = shiftInfo.key;
+                    const scheduledLibrarians = todaySchedule[shiftKey] || [];
+                    
+                    if (scheduledLibrarians.length > 0) {
+                        shiftsRendered++;
+                        
+                        const librariansByStatus = {
+                            'Belum Absen': [],
+                            'Hadir': [],
+                            'Izin': [],
+                            'Alpha': []
+                        };
+
+                        scheduledLibrarians.forEach((lib, index) => {
+                            const statusKey = ['Hadir', 'Izin', 'Alpha'].includes(lib.status) ? lib.status : 'Belum Absen';
+                            librariansByStatus[statusKey].push({ ...lib, index: index }); 
+                        });
+
+                        librariansByStatus['Belum Absen'].sort((a,b) => a.name.localeCompare(b.name));
+
+                        attendanceDisplay.innerHTML += `
+                            <div class="p-6 card border-t-4 ${shiftKey === 'pagi' ? 'border-green-500' : 'border-yellow-500'}">
+                                <h3 class="text-2xl font-bold ${shiftKey === 'pagi' ? 'text-green-700' : 'text-yellow-700'} mb-2">Shift ${shiftInfo.name}</h3>
+                                <p class="text-sm text-gray-600 mb-4">Absensi untuk jam ${shiftInfo.timeRange}. Seret nama ke kotak yang sesuai.</p>
+                                
+                                <div class="grid grid-cols-4 gap-4" id="shift-container-${shiftKey}">
+                                    
+                                    <div class="col-span-1 p-3 bg-gray-100 rounded-lg shadow-inner border border-gray-300 h-full dropzone"
+                                        data-status="Belum Absen"
+                                        ondragover="dragOver(event)"
+                                        ondragleave="dragLeave(event)"
+                                        ondrop="handleDrop(event, 'Belum Absen')">
+                                        <p class="font-bold text-gray-700 mb-3 text-center">Belum Absen</p>
+                                        <div class="space-y-2" id="${getContainerId(shiftKey, 'Belum Absen')}">
+                                        ${librariansByStatus['Belum Absen'].map(lib => renderLibrarianItemHtml(lib, shiftKey)).join('')}
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-1 dropzone bg-green-50 border-green-400 rounded-lg"
+                                        data-status="Hadir"
+                                        ondragover="dragOver(event)"
+                                        ondragleave="dragLeave(event)"
+                                        ondrop="handleDrop(event, 'Hadir')">
+                                        <p class="font-bold text-green-700 mb-3 text-center">HADIR</p>
+                                        <div class="space-y-2" id="${getContainerId(shiftKey, 'Hadir')}">
+                                            ${librariansByStatus['Hadir'].map(lib => renderLibrarianItemHtml(lib, shiftKey)).join('')}
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-1 dropzone bg-yellow-50 border-yellow-400 rounded-lg"
+                                        data-status="Izin"
+                                        ondragover="dragOver(event)"
+                                        ondragleave="dragLeave(event)"
+                                        ondrop="handleDrop(event, 'Izin')">
+                                        <p class="font-bold text-yellow-700 mb-3 text-center">IZIN</p>
+                                        <div class="space-y-2" id="${getContainerId(shiftKey, 'Izin')}">
+                                            ${librariansByStatus['Izin'].map(lib => renderLibrarianItemHtml(lib, shiftKey)).join('')}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-span-1 dropzone bg-red-50 border-red-400 rounded-lg"
+                                        data-status="Alpha"
+                                        ondragover="dragOver(event)"
+                                        ondragleave="dragLeave(event)"
+                                        ondrop="handleDrop(event, 'Alpha')">
+                                        <p class="font-bold text-red-700 mb-3 text-center">ALPHA</p>
+                                        <div class="space-y-2" id="${getContainerId(shiftKey, 'Alpha')}">
+                                            ${librariansByStatus['Alpha'].map(lib => renderLibrarianItemHtml(lib, shiftKey)).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                if(shiftsRendered === 0) {
+                     attendanceDisplay.innerHTML = `
+                        <div class="text-center py-10 card bg-gray-100">
+                            <h3 class="text-xl font-bold text-gray-700 mb-2">Tidak ada Pustakawan yang Dijadwalkan</h3>
+                            <p class="text-gray-500">Tidak ada pustakawan yang memiliki jadwal untuk shift ${activeShifts.map(s => s.name).join(' dan ')} hari ini.</p>
+                        </div>
+                    `;
+                }
+
+            } catch (e) {
+                console.error("Gagal memuat jadwal:", e);
+                attendanceDisplay.innerHTML = `
+                    <div class="p-4 mb-4 border-l-4 rounded-lg bg-red-100 text-red-700 border-red-500">
+                        Error: Gagal memuat data jadwal dari Firebase. Cek koneksi atau konfigurasi. (${e.message})
+                    </div>
+                `;
+            }
+        }
+        
+        /**
+         * Menangani pembaruan status absensi di Firebase.
+         */
+        window.handleStatusUpdate = async (shift, status, index, librarianId, librarianName) => {
+            const todayKey = getTodayInfo().dateKey;
+            
+            const updateData = { status: status };
+            if (status === 'Hadir') {
+                updateData.checkIn = new Date().toISOString();
+                updateData.absentBy = null; 
+            } else if (status === 'Belum Absen') {
+                updateData.checkIn = null;
+                updateData.absentBy = null;
+            } else {
+                 // Izin or Alpha
+                 updateData.absentBy = 'SharedTerminal'; 
+                 updateData.checkIn = null;
+            }
+
+            const path = `librarian_schedules/${todayKey}/${shift}/${index}`;
+
+            try {
+                // 1. Update Firebase
+                await update(ref(db, path), updateData);
+                
+                // 2. --- LOCAL DOM MANIPULATION (Smooth Update) ---
+                
+                // Construct object data for re-rendering the single card
+                const updatedLib = {
+                    librarianId: librarianId,
+                    name: librarianName,
+                    status: status,
+                    index: index,
+                    checkIn: updateData.checkIn || null 
+                };
+                
+                // Find the old card element
+                const oldCardElement = document.getElementById(`card-${shift}-${index}`);
+                
+                // Determine the new container
+                const targetContainerId = getContainerId(shift, status);
+                const targetContainer = document.getElementById(targetContainerId);
+
+                if (oldCardElement && targetContainer) {
+                    // Remove the old card
+                    oldCardElement.remove();
+
+                    // Insert the new card into the correct container
+                    const newCardHtml = renderLibrarianItemHtml(updatedLib, shift);
+                    targetContainer.insertAdjacentHTML('beforeend', newCardHtml);
+                } else {
+                     // Fallback: If elements are missing (e.g., initial load issue), force a full render
+                     await loadAndRenderAttendance();
+                }
+
+                // --- END LOCAL DOM MANIPULATION ---
+
+            } catch (e) {
+                console.error("Gagal update status:", e);
+                alert(`Gagal menyimpan status ${status}: ${e.message}`);
+            }
+        };
+
+
+        // --- INIT APP ---
+        window.onload = () => {
+             updateRealTimeClock(); 
+             setInterval(updateRealTimeClock, 1000); 
+             
+             // Setel refresh otomatis absensi setiap 60 detik (untuk memastikan data selalu sync)
+             setInterval(loadAndRenderAttendance, 60000); 
+             loadAndRenderAttendance(); // Muat awal
+        };
+    </script>
+</body>
+</html>
