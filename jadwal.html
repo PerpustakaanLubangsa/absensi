@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jadwal Mingguan Pustakawan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Mengimpor Font Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        
+        /* Pengaturan Body dan Layout Utama (Full Screen) */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f0fdfa; /* cyan-50, latar belakang yang sangat terang */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        
+        /* Style untuk container utama (Mengisi Full Width) */
+        .container-card {
+            background-color: white;
+            border-radius: 0; 
+            box-shadow: none; 
+            max-width: 100%; 
+            width: 100%; 
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        /* Table Wrapper */
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            /* Box shadow halus untuk meniru tampilan kartu pada table full-width */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        }
+        
+        /* Table Styles */
+        .schedule-table {
+            min-width: 1000px; /* Minimal width agar horizontal scroll muncul di layar kecil */
+            width: 100%; 
+            border-collapse: collapse; /* Penting untuk border yang rapi */
+        }
+
+        th, td {
+            padding: 12px 10px; 
+            text-align: left;
+            border: 1px solid #e0f2f7; /* cyan-100 */
+            vertical-align: top;
+            /* Memastikan kolom Hari memiliki lebar yang sama */
+            width: calc(100% / 7); 
+        }
+
+        /* Header Hari */
+        .day-header {
+            background-color: #ecfeff; /* cyan-50 */
+            color: #06b6d4; /* cyan-500 */
+            font-weight: 700;
+            text-align: center;
+            border-top: 3px solid #06b6d4; /* Aksen Cyan di atas */
+            height: 50px;
+        }
+
+        /* Header Shift (Pagi/Malam) */
+        .shift-header-row th {
+            background-color: #4b5563; /* Lebih gelap untuk pembatas shift */
+            color: white;
+            text-align: center;
+            font-size: 1.1rem;
+            padding: 16px 10px;
+            font-weight: 600;
+        }
+        
+        /* Baris data */
+        .data-row td {
+            font-size: 0.9rem;
+            color: #374151; /* gray-700 */
+        }
+
+        /* Style untuk sel kosong */
+        .empty-cell {
+            color: #94a3b8; /* slate-400 */
+            font-style: italic;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div class="container-card">
+        <div id="schedule-table-container" class="table-wrapper">
+            <div id="loading-indicator" class="text-center py-20 text-gray-500 text-xl font-medium">Memuat Jadwal...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        // =================================================================
+        // KONFIGURASI FIREBASE (HARUS SAMA DENGAN FILE LAIN)
+        // =================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBb-hbcc_ZE2hH6dlc81HbIGMQi96y4qYI",
+            authDomain: "absensi-7ef83.firebaseapp.com",
+            databaseURL: "https://absensi-7ef83-default-rtdb.firebaseio.com",
+            projectId: "absensi-7ef83",
+            storageBucket: "absensi-7ef83.firebasestorage.app",
+            messagingSenderId: "661765044421",
+            appId: "1:661765044421:web:b8578a195a6d208dc4d8ac"
+        };
+        // =================================================================
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Hari diurutkan dari Senin hingga Ahad
+        const DAYS_OF_WEEK_ORDERED = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Ahad'];
+        
+        // Semua shift yang relevan
+        const ALL_SHIFTS = [
+            { key: 'pagi', name: 'PAGI (08:00 - 11:00)' },
+            { key: 'malam', name: 'MALAM (21:00 - 22:30)' }
+        ];
+
+        /**
+         * Mengambil data jadwal mingguan dan merendernya ke tabel.
+         */
+        async function loadAndRenderSchedule() {
+            const container = document.getElementById('schedule-table-container');
+
+            try {
+                const scheduleRef = ref(db, 'recurring_templates');
+                const snapshot = await get(scheduleRef);
+                const weeklySchedule = snapshot.val() || {};
+
+                renderMatrixTable(weeklySchedule, container);
+
+            } catch (e) {
+                console.error("Gagal memuat jadwal:", e);
+                container.innerHTML = `
+                    <div class="text-center py-20 text-red-500 text-xl font-medium">
+                        Error: Gagal memuat data jadwal. Cek koneksi Firebase.
+                    </div>
+                `;
+            }
+        }
+
+        /**
+         * Membangun dan menampilkan tabel jadwal mingguan dalam format Matriks.
+         */
+        function renderMatrixTable(weeklySchedule, container) {
+            
+            // 1. Tentukan jumlah baris maksimum yang dibutuhkan per shift
+            let maxPagiRows = 0;
+            let maxMalamRows = 0;
+
+            DAYS_OF_WEEK_ORDERED.forEach(day => {
+                const daySchedule = weeklySchedule[day] || {};
+                maxPagiRows = Math.max(maxPagiRows, (daySchedule.pagi || []).length);
+                maxMalamRows = Math.max(maxMalamRows, (daySchedule.malam || []).length);
+            });
+
+            // Jika tidak ada data, tetap sediakan 1 baris untuk placeholder 'Kosong'
+            if (maxPagiRows === 0) maxPagiRows = 1; 
+            if (maxMalamRows === 0) maxMalamRows = 1; 
+
+
+            // 2. Setup Header Hari (Tabel Tunggal)
+            let headerHtml = '<thead><tr>';
+            DAYS_OF_WEEK_ORDERED.forEach(day => {
+                headerHtml += `<th class="day-header text-center">${day}</th>`;
+            });
+            headerHtml += '</tr></thead>';
+
+            let bodyHtml = '';
+
+            // 3. Render Shift Pagi dan Malam
+            ALL_SHIFTS.forEach(shiftInfo => {
+                const shiftKey = shiftInfo.key;
+                const maxRows = shiftKey === 'pagi' ? maxPagiRows : maxMalamRows;
+                
+                // Tambahkan Header Shift
+                bodyHtml += `
+                    <tbody class="shift-group">
+                        <tr class="shift-header-row">
+                            <th colspan="${DAYS_OF_WEEK_ORDERED.length}">${shiftInfo.name}</th>
+                        </tr>
+                `;
+
+                // Tambahkan Baris Data (iterasi hingga maxRows)
+                for (let r = 0; r < maxRows; r++) {
+                    let rowHtml = '<tr class="data-row">';
+                    
+                    DAYS_OF_WEEK_ORDERED.forEach(day => {
+                        const librarians = (weeklySchedule[day] && weeklySchedule[day][shiftKey]) || [];
+                        const librarianName = librarians[r] ? librarians[r].name : '';
+
+                        rowHtml += `<td class="text-center">`;
+                        if (librarianName) {
+                            rowHtml += `<span>${librarianName}</span>`;
+                        } else if (r === 0 && librarians.length === 0) {
+                            // Tampilkan placeholder hanya di baris pertama jika shift kosong
+                            rowHtml += `<span class="empty-cell">Kosong</span>`;
+                        } else {
+                            // Biarkan sel kosong jika ini adalah baris ekstra
+                            rowHtml += ``;
+                        }
+                        rowHtml += `</td>`;
+                    });
+
+                    rowHtml += '</tr>';
+                    bodyHtml += rowHtml;
+                }
+
+                bodyHtml += '</tbody>';
+            });
+            
+            // 4. Gabungkan semua HTML
+            const fullTableHtml = `<table class="schedule-table">${headerHtml}${bodyHtml}</table>`;
+
+            if (maxPagiRows > 0 || maxMalamRows > 0) {
+                container.innerHTML = fullTableHtml;
+            } else {
+                 container.innerHTML = `
+                    <div class="text-center py-20 text-gray-700 text-xl font-medium">
+                        <h3 class="font-bold mb-2">Jadwal Kosong</h3>
+                        <p class="text-base text-gray-500">Tidak ada jadwal shift yang terdefinisi dalam database.</p>
+                    </div>
+                 `;
+            }
+        }
+
+        // --- INIT APP ---
+        window.onload = () => {
+             loadAndRenderSchedule();
+        };
+    </script>
+</body>
+</html>
