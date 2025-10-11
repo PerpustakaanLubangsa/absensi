@@ -6,98 +6,165 @@
     <title>Jadwal Mingguan Pustakawan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Mengimpor Font Inter */
+        /* Mengimpor Font Inter untuk tampilan modern */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         
-        /* Pengaturan Body dan Layout Utama (Full Screen) */
+        /* Pengaturan Body dan Layout Utama (Full Screen, berpusat) */
         html, body {
             height: 100%;
             margin: 0;
             padding: 0;
+            /* Memungkinkan scroll di body jika konten kartu melebihi tinggi layar */
+            overflow: auto; 
         }
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #f0fdfa; /* cyan-50, latar belakang yang sangat terang */
+            background-color: #f0fdfa; /* Cyan-50, latar belakang sangat lembut */
             display: flex;
             justify-content: center;
-            align-items: flex-start;
+            align-items: flex-start; /* Konten dimulai dari atas */
+            padding: 3rem 0; /* Memberikan ruang di atas dan bawah kartu */
         }
         
-        /* Style untuk container utama (Mengisi Full Width) */
+        /* Style untuk container utama (Kartu Sudut Lembut) */
         .container-card {
             background-color: white;
-            border-radius: 0; 
-            box-shadow: none; 
-            max-width: 100%; 
-            width: 100%; 
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        /* Table Wrapper */
-        .table-wrapper {
-            width: 100%;
-            overflow-x: auto;
-            /* Box shadow halus untuk meniru tampilan kartu pada table full-width */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+            /* Sudut yang lembut */
+            border-radius: 16px; 
+            /* Bayangan halus 3D untuk kesan megah */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); 
+            max-width: 95%; /* Maksimal 95% lebar layar */
+            width: 1200px; /* Lebar maksimum yang nyaman */
+            margin: 0 auto;
+            overflow: hidden; /* Penting agar tabel di dalamnya tidak merusak sudut kartu */
         }
         
         /* Table Styles */
-        .schedule-table {
-            min-width: 1000px; /* Minimal width agar horizontal scroll muncul di layar kecil */
-            width: 100%; 
-            border-collapse: collapse; /* Penting untuk border yang rapi */
-        }
-
         th, td {
-            padding: 12px 10px; 
+            padding: 16px 12px; 
             text-align: left;
-            border: 1px solid #e0f2f7; /* cyan-100 */
+            border-right: 1px solid #f1f5f9; 
+            border-bottom: 1px solid #f1f5f9; 
+            overflow: hidden;
             vertical-align: top;
-            /* Memastikan kolom Hari memiliki lebar yang sama */
-            width: calc(100% / 7); 
+            transition: background-color 0.2s;
         }
 
-        /* Header Hari */
-        .day-header {
-            background-color: #ecfeff; /* cyan-50 */
-            color: #06b6d4; /* cyan-500 */
-            font-weight: 700;
-            text-align: center;
-            border-top: 3px solid #06b6d4; /* Aksen Cyan di atas */
-            height: 50px;
+        /* Hover pada sel hari untuk interaksi yang lembut */
+        td:not(:first-child):hover {
+            background-color: #f8fafc; /* Slate-50 */
         }
 
-        /* Header Shift (Pagi/Malam) */
-        .shift-header-row th {
-            background-color: #4b5563; /* Lebih gelap untuk pembatas shift */
-            color: white;
-            text-align: center;
-            font-size: 1.1rem;
-            padding: 16px 10px;
+        /* Kolom untuk Shift/Waktu */
+        th:first-child, td:first-child {
+            width: 15%; 
             font-weight: 600;
+            background-color: #f8fafc; 
+            border-right: 2px solid #e2e8f0; 
+        }
+        /* Kolom Hari dibagi rata */
+        th:not(:first-child), td:not(:first-child) {
+            width: calc(85% / 7); 
+        }
+
+        /* Style untuk Header Kolom (Hari) */
+        th {
+            background-color: #ecfeff; /* Cyan-50 */
+            color: #0e7490; /* Cyan-700 */
+            font-weight: 700;
+            /* Aksen Garis Cyan yang Megah di atas */
+            border-top: 4px solid #06b6d4; 
+            position: sticky; 
+            top: 0;
+            z-index: 10;
         }
         
-        /* Baris data */
-        .data-row td {
-            font-size: 0.9rem;
-            color: #374151; /* gray-700 */
+        /* Menghilangkan border pada kolom dan baris terakhir */
+        th:last-child, td:last-child {
+            border-right: none;
+        }
+        tr:last-child td {
+            border-bottom: none;
         }
 
+        /* NEW DIVIDER STYLES */
+        .divider-row td {
+            height: 35px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: white;
+            text-align: center !important;
+            font-size: 0.9rem;
+            padding: 8px;
+            border-right: none;
+            border-bottom: none;
+            cursor: default;
+        }
+        /* Menggunakan Cyan sebagai warna dominan */
+        .divider-harian td {
+            background-color: #06b6d4; /* Cyan-500 */
+            color: #fff;
+        }
+        .divider-pembina td {
+            background-color: #0e7490; /* Cyan-700 (Lebih gelap) */
+            color: #fff;
+        }
+        /* END NEW DIVIDER STYLES */
+        
+        /* Shift Badges (Warna yang lebih soft) */
+        .shift-badge-pagi {
+            background-color: #e0f2f7; /* Cyan-100 (Sangat soft) */
+            color: #0e7490; /* Cyan-700 */
+        }
+        .shift-badge-malam {
+            background-color: #bfdbfe; /* Blue-200 (Biru Malam) */
+            color: #1d4ed8; /* Blue-700 */
+        }
+        .shift-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
         /* Style untuk sel kosong */
         .empty-cell {
-            color: #94a3b8; /* slate-400 */
+            color: #94a3b8; /* Slate-400 */
             font-style: italic;
-            text-align: center;
             font-size: 0.8rem;
         }
         
+        /* Style untuk daftar pustakawan */
+        .librarian-list {
+             list-style: none;
+             padding: 0;
+             margin: 0;
+             font-size: 0.95rem; 
+             line-height: 1.4;
+             color: #334155; /* Slate-700 */
+        }
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        /* Judul Kartu */
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+        }
     </style>
 </head>
 <body>
 
     <div class="container-card">
+        <div class="card-header">
+             <h1 class="text-2xl font-extrabold text-gray-800">Jadwal Mingguan Pustakawan</h1>
+             <p class="text-sm text-gray-500">Template Jadwal Berulang (Shift Harian & Pembina)</p>
+        </div>
         <div id="schedule-table-container" class="table-wrapper">
             <div id="loading-indicator" class="text-center py-20 text-gray-500 text-xl font-medium">Memuat Jadwal...</div>
         </div>
@@ -124,17 +191,19 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Hari diurutkan dari Senin hingga Ahad
+        // Hari diurutkan dari Senin hingga Ahad untuk kolom horizontal
         const DAYS_OF_WEEK_ORDERED = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Ahad'];
         
         // Semua shift yang relevan
         const ALL_SHIFTS = [
-            { key: 'pagi', name: 'PAGI (08:00 - 11:00)' },
-            { key: 'malam', name: 'MALAM (21:00 - 22:30)' }
+            { key: 'pagi', name: 'Pagi', time: '08:00 - 11:00', badgeClass: 'shift-badge-pagi' },
+            { key: 'malam', name: 'Malam', time: '21:00 - 22:30', badgeClass: 'shift-badge-malam' }
         ];
 
+        const TOTAL_COLUMNS = DAYS_OF_WEEK_ORDERED.length + 1; // 8 kolom (Shift + 7 Hari)
+
         /**
-         * Mengambil data jadwal mingguan dan merendernya ke tabel.
+         * Mengambil data jadwal mingguan dan merendernya ke tabel horizontal.
          */
         async function loadAndRenderSchedule() {
             const container = document.getElementById('schedule-table-container');
@@ -144,7 +213,7 @@
                 const snapshot = await get(scheduleRef);
                 const weeklySchedule = snapshot.val() || {};
 
-                renderMatrixTable(weeklySchedule, container);
+                renderHorizontalTable(weeklySchedule, container);
 
             } catch (e) {
                 console.error("Gagal memuat jadwal:", e);
@@ -157,79 +226,106 @@
         }
 
         /**
-         * Membangun dan menampilkan tabel jadwal mingguan dalam format Matriks.
+         * Membuat HTML untuk satu baris shift (Pagi atau Malam).
          */
-        function renderMatrixTable(weeklySchedule, container) {
+        function renderShiftRow(shiftInfo, weeklySchedule) {
+            const shiftKey = shiftInfo.key;
+            let rowHtml = '<tr>';
             
-            // 1. Tentukan jumlah baris maksimum yang dibutuhkan per shift
-            let maxPagiRows = 0;
-            let maxMalamRows = 0;
-
+            // First cell: Shift Name and Time
+            rowHtml += `
+                <td>
+                    <span class="shift-badge ${shiftInfo.badgeClass}">${shiftInfo.name}</span>
+                    <div class="text-xs text-gray-500">${shiftInfo.time}</div>
+                </td>
+            `;
+            
+            // Other cells: Librarians for each day
             DAYS_OF_WEEK_ORDERED.forEach(day => {
                 const daySchedule = weeklySchedule[day] || {};
-                maxPagiRows = Math.max(maxPagiRows, (daySchedule.pagi || []).length);
-                maxMalamRows = Math.max(maxMalamRows, (daySchedule.malam || []).length);
-            });
-
-            // Jika tidak ada data, tetap sediakan 1 baris untuk placeholder 'Kosong'
-            if (maxPagiRows === 0) maxPagiRows = 1; 
-            if (maxMalamRows === 0) maxMalamRows = 1; 
-
-
-            // 2. Setup Header Hari (Tabel Tunggal)
-            let headerHtml = '<thead><tr>';
-            DAYS_OF_WEEK_ORDERED.forEach(day => {
-                headerHtml += `<th class="day-header text-center">${day}</th>`;
-            });
-            headerHtml += '</tr></thead>';
-
-            let bodyHtml = '';
-
-            // 3. Render Shift Pagi dan Malam
-            ALL_SHIFTS.forEach(shiftInfo => {
-                const shiftKey = shiftInfo.key;
-                const maxRows = shiftKey === 'pagi' ? maxPagiRows : maxMalamRows;
+                const librarians = daySchedule[shiftKey] || [];
                 
-                // Tambahkan Header Shift
-                bodyHtml += `
-                    <tbody class="shift-group">
-                        <tr class="shift-header-row">
-                            <th colspan="${DAYS_OF_WEEK_ORDERED.length}">${shiftInfo.name}</th>
-                        </tr>
-                `;
-
-                // Tambahkan Baris Data (iterasi hingga maxRows)
-                for (let r = 0; r < maxRows; r++) {
-                    let rowHtml = '<tr class="data-row">';
-                    
-                    DAYS_OF_WEEK_ORDERED.forEach(day => {
-                        const librarians = (weeklySchedule[day] && weeklySchedule[day][shiftKey]) || [];
-                        const librarianName = librarians[r] ? librarians[r].name : '';
-
-                        rowHtml += `<td class="text-center">`;
-                        if (librarianName) {
-                            rowHtml += `<span>${librarianName}</span>`;
-                        } else if (r === 0 && librarians.length === 0) {
-                            // Tampilkan placeholder hanya di baris pertama jika shift kosong
-                            rowHtml += `<span class="empty-cell">Kosong</span>`;
-                        } else {
-                            // Biarkan sel kosong jika ini adalah baris ekstra
-                            rowHtml += ``;
-                        }
-                        rowHtml += `</td>`;
+                rowHtml += `<td>`;
+                if (librarians.length > 0) {
+                    rowHtml += `<ul class="librarian-list">`;
+                    // Urutkan nama untuk tampilan yang rapi
+                    librarians.sort((a,b) => a.name.localeCompare(b.name));
+                    librarians.forEach(lib => {
+                        rowHtml += `<span>${lib.name}</span><br>`;
                     });
-
-                    rowHtml += '</tr>';
-                    bodyHtml += rowHtml;
+                    rowHtml += `</ul>`;
+                } else {
+                    rowHtml += `<span class="empty-cell">Kosong</span>`;
                 }
-
-                bodyHtml += '</tbody>';
+                rowHtml += `</td>`;
             });
             
-            // 4. Gabungkan semua HTML
-            const fullTableHtml = `<table class="schedule-table">${headerHtml}${bodyHtml}</table>`;
+            rowHtml += '</tr>';
+            return rowHtml;
+        }
 
-            if (maxPagiRows > 0 || maxMalamRows > 0) {
+        /**
+         * Membuat HTML untuk baris pembatas (Harian atau Pembina).
+         */
+        function createDividerRow(label, className) {
+             // Menggunakan TOTAL_COLUMNS untuk colspan
+             return `
+                <tr class="divider-row ${className}">
+                    <td colspan="${TOTAL_COLUMNS}">${label}</td>
+                </tr>
+            `;
+        }
+
+
+        /**
+         * Membangun dan menampilkan tabel jadwal mingguan secara horizontal.
+         */
+        function renderHorizontalTable(weeklySchedule, container) {
+            
+            // 1. Setup Header (Days as columns)
+            let headerHtml = '<th>Shift & Waktu</th>'; // First column for shift/time
+            DAYS_OF_WEEK_ORDERED.forEach(day => {
+                headerHtml += `<th class="text-center">${day}</th>`;
+            });
+
+            // 2. Setup Body (Sequential rendering)
+            let bodyHtml = '';
+            
+            // --- BAGIAN PAGI ---
+            const pagiShiftInfo = ALL_SHIFTS.find(s => s.key === 'pagi');
+            if (pagiShiftInfo) {
+                bodyHtml += renderShiftRow(pagiShiftInfo, weeklySchedule);
+            }
+
+            // --- PEMBATAS 1: Harian & Pembina (SETELAH PAGI) ---
+            bodyHtml += createDividerRow('Harian', 'divider-harian');
+            bodyHtml += createDividerRow('Pembina', 'divider-pembina');
+
+
+            // --- BAGIAN MALAM ---
+            const malamShiftInfo = ALL_SHIFTS.find(s => s.key === 'malam');
+             if (malamShiftInfo) {
+                bodyHtml += renderShiftRow(malamShiftInfo, weeklySchedule);
+            }
+
+            // --- PEMBATAS 2: Harian & Pembina (DI AKHIR) ---
+            bodyHtml += createDividerRow('Harian', 'divider-harian');
+            bodyHtml += createDividerRow('Pembina', 'divider-pembina');
+
+
+            // 3. Assemble the full table HTML
+            const fullTableHtml = `
+                <table class="w-full divide-y divide-gray-200" style="border-collapse: collapse;">
+                    <thead>
+                        <tr>${headerHtml}</tr>
+                    </thead>
+                    <tbody class="bg-white" id="schedule-tbody">
+                        ${bodyHtml}
+                    </tbody>
+                </table>
+            `;
+
+            if (bodyHtml.length > 0) {
                 container.innerHTML = fullTableHtml;
             } else {
                  container.innerHTML = `
