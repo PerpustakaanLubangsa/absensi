@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jadwal Mingguan Pustakawan</title>
+    <title>Jadwal Piket Pustakawan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Mengimpor Font Inter untuk tampilan modern */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         
-        /* Pengaturan Body dan Layout Utama (Full Screen, berpusat) */
+        /* Pengaturan Body dan Layout Utama (Kartu di Tengah) */
         html, body {
             height: 100%;
             margin: 0;
@@ -19,7 +19,7 @@
         }
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #f0fdfa; /* Cyan-50, latar belakang sangat lembut */
+            background-color: #white; /* Cyan-50, latar belakang sangat lembut */
             display: flex;
             justify-content: center;
             align-items: flex-start; /* Konten dimulai dari atas */
@@ -52,7 +52,7 @@
 
         /* Hover pada sel hari untuk interaksi yang lembut */
         td:not(:first-child):hover {
-            background-color: #f8fafc; /* Slate-50 */
+            background-color: #f8fafc; 
         }
 
         /* Kolom untuk Shift/Waktu */
@@ -150,11 +150,89 @@
             overflow-x: auto;
         }
         
-        /* Judul Kartu */
+        /* Judul Kartu - Diubah menjadi Flexbox Header dengan warna Pembina */
         .card-header {
             padding: 20px 24px;
             border-bottom: 1px solid #e2e8f0;
-            background-color: #f8fafc;
+            background-color: #0e7490; /* MATCHES DIVIDER PEMBINA COLOR */
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+        }
+        
+        /* Logo Styling */
+        .logo {
+            height: 48px; /* Ukuran yang cukup untuk logo */
+            width: auto;
+        }
+
+        /* Title Group Styling */
+        .header-title-group {
+            text-align: right; /* Teks di sebelah kanan */
+        }
+
+        /* ======================================= */
+        /* MEDIA PRINT STYLES (Print-Friendly) */
+        /* ======================================= */
+        @media print {
+            /* 1. Reset Body/Card Layout */
+            body {
+                background-color: white !important;
+                padding: 0 !important;
+                margin: 0;
+                display: block;
+                width: 100%;
+                font-size: 10pt; /* Ukuran font lebih kecil untuk kertas */
+            }
+            .container-card {
+                width: 100% !important;
+                max-width: none !important;
+                box-shadow: none !important; /* Hilangkan bayangan */
+                border-radius: 0 !important; /* Hilangkan sudut melengkung */
+                overflow: visible !important;
+            }
+            .table-wrapper {
+                overflow-x: visible !important; /* Pastikan tabel tidak terpotong */
+            }
+
+            /* 2. Header and Table Colors/Borders */
+            .card-header, th {
+                background-color: #e5e7eb !important; /* Latar belakang abu-abu terang */
+                -webkit-print-color-adjust: exact; /* Penting untuk mencetak warna latar */
+                color: #1f2937 !important;
+                border-bottom: 1px solid #94a3b8 !important;
+            }
+            /* Pastikan Judul Kartu berwarna gelap saat dicetak */
+            .card-header h1 {
+                 color: #1f2937 !important; 
+            }
+            th {
+                border-top: 2px solid #06b6d4 !important; /* Pertahankan aksen Cyan di header */
+            }
+            
+            /* 3. Divider Colors (Jadikan hitam putih) */
+            .divider-row td {
+                color: white !important;
+                background-color: #334155 !important; /* Slate gelap untuk pemisah */
+                border: 1px solid #94a3b8 !important;
+                -webkit-print-color-adjust: exact;
+            }
+
+            /* 4. Badge Styles (Jadikan hitam putih, tetapi beri border) */
+            .shift-badge {
+                border: 1px solid #1f2937 !important;
+                background-color: white !important;
+                color: #1f2937 !important;
+                -webkit-print-color-adjust: exact;
+            }
+            .shift-badge-pagi { border-color: #0e7490 !important; }
+            .shift-badge-malam { border-color: #1d4ed8 !important; }
+            
+            /* 5. General Table Styles */
+            th, td {
+                border-color: #d1d5db !important;
+                padding: 10px 8px !important; /* Padding lebih kecil */
+            }
         }
     </style>
 </head>
@@ -162,8 +240,11 @@
 
     <div class="container-card">
         <div class="card-header">
-             <h1 class="text-2xl font-extrabold text-gray-800">Jadwal Mingguan Pustakawan</h1>
-             <p class="text-sm text-gray-500">Template Jadwal Berulang (Shift Harian & Pembina)</p>
+             <img src="logo.png" alt="Logo Organisasi" class="logo">
+             
+             <div class="header-title-group">
+                 <h1 class="text-2xl font-extrabold text-white">Jadwal Piket Pustakawan</h1>
+                 </div>
         </div>
         <div id="schedule-table-container" class="table-wrapper">
             <div id="loading-indicator" class="text-center py-20 text-gray-500 text-xl font-medium">Memuat Jadwal...</div>
