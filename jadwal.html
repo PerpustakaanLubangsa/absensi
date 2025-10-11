@@ -9,34 +9,33 @@
         /* Mengimpor Font Inter untuk tampilan modern */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         
-        /* Pengaturan Body dan Layout Utama (Kartu di Tengah) */
+        /* Pengaturan Body dan Layout Utama (Full White Background) */
         html, body {
             height: 100%;
             margin: 0;
             padding: 0;
-            /* Memungkinkan scroll di body jika konten kartu melebihi tinggi layar */
             overflow: auto; 
         }
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #white; /* Cyan-50, latar belakang sangat lembut */
+            background-color: white; /* Diubah menjadi PUTIH */
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Konten dimulai dari atas */
-            padding: 3rem 0; /* Memberikan ruang di atas dan bawah kartu */
+            align-items: flex-start; 
+            padding: 3rem 0; 
         }
         
         /* Style untuk container utama (Kartu Sudut Lembut) */
         .container-card {
             background-color: white;
-            /* Sudut yang lembut */
             border-radius: 16px; 
-            /* Bayangan halus 3D untuk kesan megah */
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); 
-            max-width: 95%; /* Maksimal 95% lebar layar */
-            width: 1200px; /* Lebar maksimum yang nyaman */
+            /* Pertahankan bayangan halus agar tetap megah/menarik */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1); 
+            max-width: 95%; 
+            width: 1200px; 
             margin: 0 auto;
-            overflow: hidden; /* Penting agar tabel di dalamnya tidak merusak sudut kartu */
+            overflow: hidden; 
+            border: 1px solid #e5e7eb; /* Tambahkan garis tipis agar kartu terlihat jelas di latar putih */
         }
         
         /* Table Styles */
@@ -150,11 +149,11 @@
             overflow-x: auto;
         }
         
-        /* Judul Kartu - Diubah menjadi Flexbox Header dengan warna Pembina */
+        /* Judul Kartu - Header Putih */
         .card-header {
             padding: 20px 24px;
             border-bottom: 1px solid #e2e8f0;
-            background-color: #0e7490; /* MATCHES DIVIDER PEMBINA COLOR */
+            background-color: white; /* Diubah menjadi PUTIH */
             display: flex;
             justify-content: space-between; 
             align-items: center;
@@ -162,13 +161,13 @@
         
         /* Logo Styling */
         .logo {
-            height: 48px; /* Ukuran yang cukup untuk logo */
+            height: 48px; 
             width: auto;
         }
 
         /* Title Group Styling */
         .header-title-group {
-            text-align: right; /* Teks di sebelah kanan */
+            text-align: right; 
         }
 
         /* ======================================= */
@@ -182,23 +181,24 @@
                 margin: 0;
                 display: block;
                 width: 100%;
-                font-size: 10pt; /* Ukuran font lebih kecil untuk kertas */
+                font-size: 10pt; 
             }
             .container-card {
                 width: 100% !important;
                 max-width: none !important;
-                box-shadow: none !important; /* Hilangkan bayangan */
-                border-radius: 0 !important; /* Hilangkan sudut melengkung */
+                box-shadow: none !important; 
+                border-radius: 0 !important; 
                 overflow: visible !important;
+                border: none !important; /* Hilangkan border kartu saat dicetak */
             }
             .table-wrapper {
-                overflow-x: visible !important; /* Pastikan tabel tidak terpotong */
+                overflow-x: visible !important; 
             }
 
             /* 2. Header and Table Colors/Borders */
             .card-header, th {
                 background-color: #e5e7eb !important; /* Latar belakang abu-abu terang */
-                -webkit-print-color-adjust: exact; /* Penting untuk mencetak warna latar */
+                -webkit-print-color-adjust: exact; 
                 color: #1f2937 !important;
                 border-bottom: 1px solid #94a3b8 !important;
             }
@@ -213,7 +213,7 @@
             /* 3. Divider Colors (Jadikan hitam putih) */
             .divider-row td {
                 color: white !important;
-                background-color: #334155 !important; /* Slate gelap untuk pemisah */
+                background-color: #334155 !important; 
                 border: 1px solid #94a3b8 !important;
                 -webkit-print-color-adjust: exact;
             }
@@ -231,7 +231,7 @@
             /* 5. General Table Styles */
             th, td {
                 border-color: #d1d5db !important;
-                padding: 10px 8px !important; /* Padding lebih kecil */
+                padding: 10px 8px !important; 
             }
         }
     </style>
@@ -243,8 +243,8 @@
              <img src="logo.png" alt="Logo Organisasi" class="logo">
              
              <div class="header-title-group">
-                 <h1 class="text-2xl font-extrabold text-white">Jadwal Piket Pustakawan</h1>
-                 </div>
+                 <h1 class="text-2xl font-extrabold text-gray-800">Jadwal Piket Pustakawan</h1>
+             </div>
         </div>
         <div id="schedule-table-container" class="table-wrapper">
             <div id="loading-indicator" class="text-center py-20 text-gray-500 text-xl font-medium">Memuat Jadwal...</div>
