@@ -9,7 +9,7 @@
         /* Mengimpor Font Inter untuk tampilan modern */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         
-        /* Pengaturan Body dan Layout Utama (Full White Background) */
+        /* Pengaturan Body dan Layout Utama */
         html, body {
             height: 100%;
             margin: 0;
@@ -18,38 +18,38 @@
         }
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: white; /* Diubah menjadi PUTIH */
+            background-color: #f7f9fb; /* Latar belakang abu-abu sangat lembut */
             display: flex;
             justify-content: center;
             align-items: flex-start; 
             padding: 3rem 0; 
         }
         
-        /* Style untuk container utama (Kartu Sudut Lembut) */
+        /* Style untuk container utama (Kartu Sudut Lembut & Bayangan Halus) */
         .container-card {
             background-color: white;
-            border-radius: 16px; 
-            /* Pertahankan bayangan halus agar tetap megah/menarik */
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1); 
+            border-radius: 5px; /* Lebih lembut */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02); /* Bayangan lebih ringan */
             max-width: 95%; 
-            width: 1200px; 
+            width: 1400px; /* Diperluas sedikit */
             margin: 0 auto;
             overflow: hidden; 
-            border: 1px solid #e5e7eb; /* Tambahkan garis tipis agar kartu terlihat jelas di latar putih */
+            border: 1px solid #e2e8f0; 
         }
         
-        /* Table Styles */
+        /* Table Styles - Fokus pada kebersihan */
         th, td {
-            padding: 16px 12px; 
+            padding: 14px 16px; /* Padding lebih lebar untuk kesan modern */
             text-align: left;
             border-right: 1px solid #f1f5f9; 
             border-bottom: 1px solid #f1f5f9; 
             overflow: hidden;
-            vertical-align: top;
+            vertical-align: middle; /* Tengah vertikal */
             transition: background-color 0.2s;
+            white-space: nowrap; /* Menjaga sel hari tetap dalam satu baris */
         }
 
-        /* Hover pada sel hari untuk interaksi yang lembut */
+        /* Hover pada sel hari */
         td:not(:first-child):hover {
             background-color: #f8fafc; 
         }
@@ -60,22 +60,22 @@
             font-weight: 600;
             background-color: #f8fafc; 
             border-right: 2px solid #e2e8f0; 
+            position: sticky; /* Sticky untuk kolom pertama */
+            left: 0;
+            z-index: 20; 
+            white-space: normal; /* Biarkan shift/waktu membungkus */
         }
-        /* Kolom Hari dibagi rata */
-        th:not(:first-child), td:not(:first-child) {
-            width: calc(85% / 7); 
-        }
-
+        
         /* Style untuk Header Kolom (Hari) */
         th {
             background-color: #ecfeff; /* Cyan-50 */
             color: #0e7490; /* Cyan-700 */
             font-weight: 700;
-            /* Aksen Garis Cyan yang Megah di atas */
-            border-top: 4px solid #06b6d4; 
+            border-top: 3px solid #06b6d4; /* Aksen garis lebih tipis */
             position: sticky; 
             top: 0;
-            z-index: 10;
+            z-index: 30; /* Lebih tinggi dari kolom pertama */
+            text-align: center !important; /* Hari di tengah */
         }
         
         /* Menghilangkan border pada kolom dan baris terakhir */
@@ -86,74 +86,67 @@
             border-bottom: none;
         }
 
-        /* NEW DIVIDER STYLES */
+        /* NEW DIVIDER STYLES (Dipertahankan, sedikit lebih lembut) */
         .divider-row td {
-            height: 35px;
-            font-weight: 700;
+            height: 30px;
+            font-weight: 600;
             text-transform: uppercase;
             color: white;
             text-align: center !important;
-            font-size: 0.9rem;
-            padding: 8px;
+            font-size: 0.85rem;
+            padding: 6px;
             border-right: none;
             border-bottom: none;
             cursor: default;
         }
-        /* Menggunakan Cyan sebagai warna dominan */
         .divider-harian td {
             background-color: #06b6d4; /* Cyan-500 */
             color: #fff;
         }
         .divider-pembina td {
-            background-color: #0e7490; /* Cyan-700 (Lebih gelap) */
+            background-color: #0e7490; /* Cyan-700 */
             color: #fff;
         }
         /* END NEW DIVIDER STYLES */
         
-        /* Shift Badges (Warna yang lebih soft) */
+        /* Shift Badges */
         .shift-badge-pagi {
-            background-color: #e0f2f7; /* Cyan-100 (Sangat soft) */
-            color: #0e7490; /* Cyan-700 */
+            background-color: #e0f7f2; /* Hijau Mint-Cyan Soft */
+            color: #0e9076; /* Hijau Tua/Teal */
         }
         .shift-badge-malam {
-            background-color: #bfdbfe; /* Blue-200 (Biru Malam) */
-            color: #1d4ed8; /* Blue-700 */
+            background-color: #ecf0ff; /* Biru Indigo Soft */
+            color: #4338ca; /* Indigo Tua */
         }
         .shift-badge {
             display: inline-block;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-        
-        /* Style untuk sel kosong */
-        .empty-cell {
-            color: #94a3b8; /* Slate-400 */
-            font-style: italic;
-            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 4px; /* Lebih kecil */
+            font-size: 0.75rem; /* Lebih kecil */
+            font-weight: 700;
+            margin-bottom: 2px;
+            letter-spacing: 0.05em;
         }
         
         /* Style untuk daftar pustakawan */
-        .librarian-list {
-             list-style: none;
-             padding: 0;
-             margin: 0;
-             font-size: 0.95rem; 
+        .librarian-text {
+             font-size: 0.9rem; 
              line-height: 1.4;
-             color: #334155; /* Slate-700 */
+             color: #1f2937; /* Gray-900 */
+             white-space: normal; /* Biarkan konten cell membungkus */
         }
-        .table-wrapper {
-            width: 100%;
-            overflow-x: auto;
+        /* Mengubah warna teks cell kosong */
+        .empty-cell {
+            color: #cbd5e1; /* Slate-300 - Sangat lembut */
+            font-style: italic;
+            font-size: 0.85rem;
         }
         
-        /* Judul Kartu - Header Putih */
+        /* Judul Kartu - Header */
         .card-header {
-            padding: 20px 24px;
+            padding: 24px 24px;
             border-bottom: 1px solid #e2e8f0;
-            background-color: white; /* Diubah menjadi PUTIH */
+            background-color: white; 
             display: flex;
             justify-content: space-between; 
             align-items: center;
@@ -165,74 +158,63 @@
             width: auto;
         }
 
-        /* Title Group Styling */
+        /* Header Title Styling */
+        .header-title-group h1 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 800;
+            color: #1f2937;
+        }
         .header-title-group {
             text-align: right; 
         }
 
+        /* Table Wrapper */
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+        
         /* ======================================= */
         /* MEDIA PRINT STYLES (Print-Friendly) */
         /* ======================================= */
         @media print {
-            /* 1. Reset Body/Card Layout */
-            body {
-                background-color: white !important;
-                padding: 0 !important;
-                margin: 0;
-                display: block;
-                width: 100%;
-                font-size: 10pt; 
+            body { background-color: white !important; padding: 0 !important; font-size: 9pt; }
+            .container-card { width: 100% !important; max-width: none !important; box-shadow: none !important; border: none !important; }
+            .table-wrapper { overflow-x: visible !important; }
+            
+            /* Warna latar belakang dan teks untuk cetak */
+            .card-header, th, .divider-row td, .shift-badge {
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important;
             }
-            .container-card {
-                width: 100% !important;
-                max-width: none !important;
-                box-shadow: none !important; 
-                border-radius: 0 !important; 
-                overflow: visible !important;
-                border: none !important; /* Hilangkan border kartu saat dicetak */
-            }
-            .table-wrapper {
-                overflow-x: visible !important; 
-            }
-
-            /* 2. Header and Table Colors/Borders */
-            .card-header, th {
-                background-color: #e5e7eb !important; /* Latar belakang abu-abu terang */
-                -webkit-print-color-adjust: exact; 
-                color: #1f2937 !important;
-                border-bottom: 1px solid #94a3b8 !important;
-            }
-            /* Pastikan Judul Kartu berwarna gelap saat dicetak */
-            .card-header h1 {
-                 color: #1f2937 !important; 
+            .card-header, th:first-child, td:first-child { 
+                background-color: #f3f4f6 !important; /* Abu-abu ringan */
             }
             th {
-                border-top: 2px solid #06b6d4 !important; /* Pertahankan aksen Cyan di header */
+                background-color: #e5e7eb !important; 
+                color: #1f2937 !important;
+                border-top: 2px solid #06b6d4 !important; 
             }
             
-            /* 3. Divider Colors (Jadikan hitam putih) */
+            /* Divider */
             .divider-row td {
                 color: white !important;
-                background-color: #334155 !important; 
-                border: 1px solid #94a3b8 !important;
-                -webkit-print-color-adjust: exact;
+                background-color: #4b5563 !important; /* Abu-abu tua */
             }
 
-            /* 4. Badge Styles (Jadikan hitam putih, tetapi beri border) */
+            /* Badge */
             .shift-badge {
-                border: 1px solid #1f2937 !important;
+                border: 1px solid #94a3b8 !important;
                 background-color: white !important;
                 color: #1f2937 !important;
-                -webkit-print-color-adjust: exact;
             }
-            .shift-badge-pagi { border-color: #0e7490 !important; }
-            .shift-badge-malam { border-color: #1d4ed8 !important; }
             
-            /* 5. General Table Styles */
+            /* General Table Styles */
             th, td {
                 border-color: #d1d5db !important;
-                padding: 10px 8px !important; 
+                padding: 8px 10px !important; 
             }
+            
         }
     </style>
 </head>
@@ -240,11 +222,11 @@
 
     <div class="container-card">
         <div class="card-header">
-             <img src="logo.png" alt="Logo Organisasi" class="logo">
+             <img src="https://via.placeholder.com/150x50?text=LOGO" alt="Logo Organisasi" class="logo">
              
              <div class="header-title-group">
-                 <h1 class="text-2xl font-extrabold text-gray-800">Jadwal Piket Pustakawan</h1>
-             </div>
+                 <h1 class="font-extrabold">Jadwal Piket Pustakawan Mingguan</h1>
+                 </div>
         </div>
         <div id="schedule-table-container" class="table-wrapper">
             <div id="loading-indicator" class="text-center py-20 text-gray-500 text-xl font-medium">Memuat Jadwal...</div>
@@ -273,15 +255,13 @@
         const db = getDatabase(app);
 
         // Hari diurutkan dari Senin hingga Ahad untuk kolom horizontal
-        const DAYS_OF_WEEK_ORDERED = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Ahad'];
+        const ALL_DAYS_OF_WEEK = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Ahad'];
         
         // Semua shift yang relevan
         const ALL_SHIFTS = [
             { key: 'pagi', name: 'Pagi', time: '08:00 - 11:00', badgeClass: 'shift-badge-pagi' },
             { key: 'malam', name: 'Malam', time: '21:00 - 22:30', badgeClass: 'shift-badge-malam' }
         ];
-
-        const TOTAL_COLUMNS = DAYS_OF_WEEK_ORDERED.length + 1; // 8 kolom (Shift + 7 Hari)
 
         /**
          * Mengambil data jadwal mingguan dan merendernya ke tabel horizontal.
@@ -294,7 +274,19 @@
                 const snapshot = await get(scheduleRef);
                 const weeklySchedule = snapshot.val() || {};
 
-                renderHorizontalTable(weeklySchedule, container);
+                // 1. Tentukan Hari yang Aktif (ada piket)
+                const activeDays = getActiveDays(weeklySchedule);
+
+                if (activeDays.length === 0) {
+                     container.innerHTML = `
+                        <div class="text-center py-20 text-gray-700 text-xl font-medium">
+                            <h3 class="font-bold mb-2">Jadwal Kosong</h3>
+                            </div>
+                    `;
+                    return;
+                }
+
+                renderHorizontalTable(weeklySchedule, container, activeDays);
 
             } catch (e) {
                 console.error("Gagal memuat jadwal:", e);
@@ -307,36 +299,56 @@
         }
 
         /**
+         * Menentukan hari-hari mana saja yang memiliki data piket.
+         * @param {object} weeklySchedule - Data jadwal dari Firebase.
+         * @returns {string[]} Array hari yang aktif, sesuai urutan.
+         */
+        function getActiveDays(weeklySchedule) {
+            const activeDays = ALL_DAYS_OF_WEEK.filter(day => {
+                const daySchedule = weeklySchedule[day];
+                if (!daySchedule) return false;
+                
+                // Cek apakah ada pustakawan di shift pagi ATAU malam
+                const hasPagi = (daySchedule.pagi || []).length > 0;
+                const hasMalam = (daySchedule.malam || []).length > 0;
+                
+                return hasPagi || hasMalam;
+            });
+            return activeDays;
+        }
+
+
+        /**
          * Membuat HTML untuk satu baris shift (Pagi atau Malam).
          */
-        function renderShiftRow(shiftInfo, weeklySchedule) {
+        function renderShiftRow(shiftInfo, weeklySchedule, activeDays) {
             const shiftKey = shiftInfo.key;
             let rowHtml = '<tr>';
             
-            // First cell: Shift Name and Time
+            // First cell: Shift Name and Time (STIKY COLUMN)
             rowHtml += `
                 <td>
                     <span class="shift-badge ${shiftInfo.badgeClass}">${shiftInfo.name}</span>
-                    <div class="text-xs text-gray-500">${shiftInfo.time}</div>
+                    <div class="text-xs text-gray-500 mt-1">${shiftInfo.time}</div>
                 </td>
             `;
             
-            // Other cells: Librarians for each day
-            DAYS_OF_WEEK_ORDERED.forEach(day => {
+            // Other cells: Librarians for each active day
+            activeDays.forEach(day => {
                 const daySchedule = weeklySchedule[day] || {};
                 const librarians = daySchedule[shiftKey] || [];
                 
                 rowHtml += `<td>`;
                 if (librarians.length > 0) {
-                    rowHtml += `<ul class="librarian-list">`;
-                    // Urutkan nama untuk tampilan yang rapi
+                    // 1. Urutkan nama untuk tampilan yang rapi
                     librarians.sort((a,b) => a.name.localeCompare(b.name));
-                    librarians.forEach(lib => {
-                        rowHtml += `<span>${lib.name}</span><br>`;
-                    });
-                    rowHtml += `</ul>`;
+                    
+                    // 2. Gabungkan semua nama menjadi satu string, dipisahkan koma
+                    const librarianNames = librarians.map(lib => lib.name).join(', ');
+                    
+                    rowHtml += `<div class="librarian-text">${librarianNames}</div>`;
                 } else {
-                    rowHtml += `<span class="empty-cell">Kosong</span>`;
+                    rowHtml += `<span class="empty-cell">—</span>`; // Simbol dash untuk kosong
                 }
                 rowHtml += `</td>`;
             });
@@ -348,11 +360,11 @@
         /**
          * Membuat HTML untuk baris pembatas (Harian atau Pembina).
          */
-        function createDividerRow(label, className) {
-             // Menggunakan TOTAL_COLUMNS untuk colspan
+        function createDividerRow(label, className, totalColumns) {
+             // Menggunakan totalColumns yang dinamis
              return `
                 <tr class="divider-row ${className}">
-                    <td colspan="${TOTAL_COLUMNS}">${label}</td>
+                    <td colspan="${totalColumns}">${label}</td>
                 </tr>
             `;
         }
@@ -361,37 +373,39 @@
         /**
          * Membangun dan menampilkan tabel jadwal mingguan secara horizontal.
          */
-        function renderHorizontalTable(weeklySchedule, container) {
+        function renderHorizontalTable(weeklySchedule, container, activeDays) {
             
-            // 1. Setup Header (Days as columns)
+            const TOTAL_COLUMNS = activeDays.length + 1; // Shift + Active Days
+
+            // 1. Setup Header (Active Days as columns)
             let headerHtml = '<th>Shift & Waktu</th>'; // First column for shift/time
-            DAYS_OF_WEEK_ORDERED.forEach(day => {
+            activeDays.forEach(day => {
                 headerHtml += `<th class="text-center">${day}</th>`;
             });
 
-            // 2. Setup Body (Sequential rendering)
+            // 2. Setup Body 
             let bodyHtml = '';
             
             // --- BAGIAN PAGI ---
             const pagiShiftInfo = ALL_SHIFTS.find(s => s.key === 'pagi');
             if (pagiShiftInfo) {
-                bodyHtml += renderShiftRow(pagiShiftInfo, weeklySchedule);
+                bodyHtml += renderShiftRow(pagiShiftInfo, weeklySchedule, activeDays);
             }
 
             // --- PEMBATAS 1: Harian & Pembina (SETELAH PAGI) ---
-            bodyHtml += createDividerRow('Harian', 'divider-harian');
-            bodyHtml += createDividerRow('Pembina', 'divider-pembina');
+            bodyHtml += createDividerRow('Harian', 'divider-harian', TOTAL_COLUMNS);
+            bodyHtml += createDividerRow('Pembina', 'divider-pembina', TOTAL_COLUMNS);
 
 
             // --- BAGIAN MALAM ---
             const malamShiftInfo = ALL_SHIFTS.find(s => s.key === 'malam');
              if (malamShiftInfo) {
-                bodyHtml += renderShiftRow(malamShiftInfo, weeklySchedule);
+                bodyHtml += renderShiftRow(malamShiftInfo, weeklySchedule, activeDays);
             }
 
             // --- PEMBATAS 2: Harian & Pembina (DI AKHIR) ---
-            bodyHtml += createDividerRow('Harian', 'divider-harian');
-            bodyHtml += createDividerRow('Pembina', 'divider-pembina');
+            bodyHtml += createDividerRow('Harian', 'divider-harian', TOTAL_COLUMNS);
+            bodyHtml += createDividerRow('Pembina', 'divider-pembina', TOTAL_COLUMNS);
 
 
             // 3. Assemble the full table HTML
@@ -406,16 +420,7 @@
                 </table>
             `;
 
-            if (bodyHtml.length > 0) {
-                container.innerHTML = fullTableHtml;
-            } else {
-                 container.innerHTML = `
-                    <div class="text-center py-20 text-gray-700 text-xl font-medium">
-                        <h3 class="font-bold mb-2">Jadwal Kosong</h3>
-                        <p class="text-base text-gray-500">Tidak ada jadwal shift yang terdefinisi dalam database.</p>
-                    </div>
-                 `;
-            }
+            container.innerHTML = fullTableHtml;
         }
 
         // --- INIT APP ---
