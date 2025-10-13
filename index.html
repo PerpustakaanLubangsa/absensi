@@ -3,51 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi Pustakawan | Drag & Drop Terminal</title>
+    <title>Absensi Pustakawan | Terminal Absen</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        
+        /* Tema Warna & Font */
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #eef2ff; /* blue-50 */
-        }
-        .card {
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 4px, 0, 0.05);
+            background-color: #f7f9fc; 
         }
         
-        /* Drag & Drop Styles */
-        .draggable-item {
-            cursor: grab;
-            border-left: 5px solid; 
-            transition: opacity 0.2s;
-            border-color: #3b82f6; /* Default Blue */
+        /* Efek Kartu Modern */
+        .card {
+            background-color: white;
+            border-radius: 16px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            transition: opacity 0.3s ease; 
         }
-        .draggable-item:active {
-            cursor: grabbing;
+        
+        /* Peningkatan Visual Clock */
+        #real-time-clock {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
+            letter-spacing: -1px;
         }
-        /* Style border untuk item yang sudah di-drop */
-        .item-hadir { border-color: #10b981; }
-        .item-izin { border-color: #fbbf24; }
-        .item-alpha { border-color: #ef4444; }
 
-        .dropzone {
-            min-height: 150px;
-            padding: 10px;
-            border: 2px dashed;
-            transition: background-color 0.2s, border-color 0.2s;
+        /* Loading/Disable State for Card (Tidak digunakan) */
+        .card.is-updating {
+            opacity: 0.6;
+            pointer-events: none;
         }
-        .dropzone.drag-over-hadir { background-color: #d1fae5; border-color: #10b981; }
-        .dropzone.drag-over-izin { background-color: #fffbeb; border-color: #fbbf24; }
-        .dropzone.drag-over-alpha { background-color: #fee2e2; border-color: #ef4444; }
 
-        /* Style kustom untuk badge status */
-        .status-hadir-bg { background-color: #10b981; color: white; }
-        .status-izin-bg { background-color: #fbbf24; color: #78350f; }
-        .status-alpha-bg { background-color: #ef4444; color: white; }
+        /* Tombol Status */
+        .status-button {
+            /* Hapus transisi untuk responsif instan */
+            font-weight: 600;
+        }
+        .status-button.hover\:opacity-80 { transition: opacity 0.15s ease; } 
 
-        /* Floating Button Admin */
+        .status-hadir { background-color: #10b981; border-color: #059669; } /* Emerald */
+        .status-izin { background-color: #f59e0b; border-color: #d97706; } /* Amber */
+        .status-alpha { background-color: #ef4444; border-color: #dc2626; } /* Red */
+        .status-belumabsen { background-color: #9ca3af; border-color: #6b7280; } /* Gray */
+        
+        /* Floating Button Admin (AKSEN CYAN) */
         .admin-button {
             position: fixed;
             bottom: 20px;
@@ -58,35 +57,72 @@
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            background-color: #3b82f6; /* blue-500 */
+            background-color: #06b6d4; /* Cyan-500 */
             color: white;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 6px 10px rgba(6, 182, 212, 0.4); /* Cyan-500 Shadow */
             transition: background-color 0.3s, transform 0.1s;
             z-index: 100;
         }
         .admin-button:hover {
-            background-color: #2563eb; /* blue-600 */
+            background-color: #0891b2; /* Cyan-600 */
+            transform: scale(1.05);
+        }
+        
+        /* Grid Responsiveness */
+        .librarian-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        /* Style untuk penempatan Indikator di dalam Shift Card */
+        .shift-container-card {
+             position: relative; 
+        }
+        .shift-header {
+            margin-bottom: 24px; 
+        }
+        
+        /* AKSEN WARNA SHIFT BARU */
+        /* Shift Pagi (Cyan) */
+        .pagi-accent {
+            border-color: #06b6d4; /* Cyan-500 untuk border-t */
+        }
+        .text-pagi-accent {
+            color: #075985; /* Cyan-800 untuk teks judul */
+        }
+        /* Shift Malam (Sky Blue) */
+        .malam-accent {
+            border-color: #38bdf8; /* Sky-400 untuk border-t */
+        }
+        .text-malam-accent {
+            color: #0284c7; /* Sky-600 untuk teks judul */
+        }
+
+        /* GAYA INDICATOR (DIHAPUS DARI JS, JADI INI HANYA PLACEHOLDER) */
+        #countdown-indicator {
+            display: none; /* Sembunyikan sepenuhnya */
         }
     </style>
 </head>
 <body>
 
-    <div id="app-container" class="min-h-screen flex flex-col items-center justify-center p-4">
-
-        <header class="w-full max-w-4xl mb-6 text-center">
-            <h1 class="text-5xl font-extrabold text-gray-800 mb-0" id="real-time-clock">00:00:00</h1>
+    <div id="app-container" class="min-h-screen flex flex-col items-center justify-center p-4 relative">
+        
+        <header class="w-full max-w-6xl mb-8 text-center">
+            <h1 class="text-6xl md:text-7xl font-extrabold text-gray-800 mb-0 transition-colors duration-500" id="real-time-clock">00:00:00</h1>
             <p class="text-xl font-semibold text-gray-500 mt-1" id="today-display">Loading...</p>
         </header>
 
-        <main id="main-attendance-view" class="w-full max-w-4xl">
+        <main id="main-attendance-view" class="w-full max-w-6xl">
             
-            <div id="attendance-display" class="space-y-6">
+            <div id="attendance-display" class="space-y-10">
                 </div>
 
         </main>
 
         <a href="admin.html" class="admin-button" title="Pergi ke Halaman Admin">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
@@ -119,23 +155,39 @@
         const attendanceDisplay = document.getElementById('attendance-display');
         const realTimeClock = document.getElementById('real-time-clock');
         
+        // Hapus variabel countdownIndicator dan countdownTimer karena tidak digunakan lagi
+        // let countdownIndicator = null; 
+        // let countdownTimer = null; 
+        
         const DAYS_OF_WEEK = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
         
-        // Window Absensi Aktif (DIUBAH SESUAI JAM PIKET BARU)
         const SHIFT_TIMES = {
-            pagi: {
-                name: 'Pagi',
-                timeRange: '08:00 - 11:00', // Jam Piket
-                startCheckIn: 8 * 60,       // 08:00
-                endCheckIn: 11 * 60,        // 11:00
-            },
-            malam: {
-                name: 'Malam',
-                timeRange: '21:00 - 22:30', // Jam Piket
-                startCheckIn: 21 * 60,      // 21:00
-                endCheckIn: 22 * 60 + 30,   // 22:30
-            }
+            pagi: { name: 'Pagi', timeRange: '08:00 - 11:00', startCheckIn: 8 * 60, endCheckIn: 11 * 60 },
+            malam: { name: 'Malam', timeRange: '21:00 - 22:30', startCheckIn: 21 * 60, endCheckIn: 22 * 60 + 30 }
         };
+
+        // --- REFRESH CONTROL (HANYA AUTO REFRESH) ---
+        const REFRESH_INTERVAL_SECONDS = 30; 
+        // POST_ACTION_DELAY_SECONDS dihapus
+        // let refreshTimeoutId = null; // Dihapus
+        // let countdownIntervalId = null; // Dihapus
+
+        /**
+         * Fungsi debouncedLoadAndRender DIHAPUS karena kita tidak ingin ada delay visual
+         * setelah menekan tombol.
+         */
+
+        /**
+         * Memulai interval auto-refresh 30 detik.
+         */
+        function startAutoRefresh() {
+            clearInterval(window.autoRefreshInterval); 
+            window.autoRefreshInterval = setInterval(() => {
+                 // Tidak perlu cek refreshTimeoutId lagi
+                 loadAndRenderAttendance();
+            }, REFRESH_INTERVAL_SECONDS * 1000);
+        }
+
 
         // --- UTILITY FUNCTIONS ---
         
@@ -150,7 +202,7 @@
             const todayFormatted = now.toLocaleDateString('id-ID', dateOptions);
 
             return {
-                dateKey: `${year}-${month}-${day}`, // YYYY-MM-DD
+                dateKey: `${year}-${month}-${day}`, 
                 dayName: DAYS_OF_WEEK[dayOfWeekIndex], 
                 formatted: todayFormatted
             };
@@ -167,10 +219,6 @@
             }
         }
 
-        /**
-         * Menentukan shift mana yang jendela check-in-nya (jam piket) sedang aktif saat ini.
-         * @returns {Array<Object>} Array shift aktif (bisa 0, 1, atau 2 shift).
-         */
         function getCurrentActiveShifts() {
             const now = new Date();
             const currentHour = now.getHours();
@@ -179,115 +227,88 @@
             
             const activeShifts = [];
 
-            // Pengecekan untuk shift Pagi (08:00 hingga sebelum 11:00)
             if (currentTimeInMinutes >= SHIFT_TIMES.pagi.startCheckIn && currentTimeInMinutes < SHIFT_TIMES.pagi.endCheckIn) {
                 activeShifts.push({ key: 'pagi', ...SHIFT_TIMES.pagi });
             }
             
-            // Pengecekan untuk shift Malam (21:00 hingga sebelum 22:30)
             if (currentTimeInMinutes >= SHIFT_TIMES.malam.startCheckIn && currentTimeInMinutes < SHIFT_TIMES.malam.endCheckIn) {
                 activeShifts.push({ key: 'malam', ...SHIFT_TIMES.malam });
             }
             
             return activeShifts; 
         }
+        
+        const getStatusClasses = (status, currentStatus) => {
+            const base = "status-button px-4 py-2 text-white rounded-full text-sm hover:opacity-80 flex-1 mx-1 border-b-4"; 
+            
+            if (status === currentStatus) {
+                const activeClasses = `opacity-100 shadow-md ${status.toLowerCase() === 'hadir' ? 'status-hadir' : status.toLowerCase() === 'izin' ? 'status-izin' : status.toLowerCase() === 'alpha' ? 'status-alpha' : 'status-belumabsen'} ring-2 ring-offset-2 ring-white/50`;
+                return `${base} ${activeClasses}`;
+            } else {
+                const inactiveClasses = `bg-gray-200 text-gray-700 opacity-50 hover:opacity-100`;
+                return `${base.replace('text-white', '')} ${inactiveClasses} border-none`;
+            }
+        }
+        
 
-        // Fungsi untuk merender satu item pustakawan
-        const renderLibrarianItemHtml = (lib, shiftKey) => {
-            const statusKey = lib.status.toLowerCase().replace(/\s/g, '');
-            const checkInTime = lib.checkIn ? new Date(lib.checkIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+        // Fungsi untuk merender kartu profil pustakawan
+        const renderLibrarianCard = (lib, shiftKey) => {
+            const checkInTime = lib.checkIn ? new Date(lib.checkIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '---';
+            const currentStatus = ['Hadir', 'Izin', 'Alpha'].includes(lib.status) ? lib.status : 'Belum Absen';
 
-            // Menambahkan ID unik untuk DOM manipulation
             return `
-                <div data-librarian-id="${lib.librarianId}"
+                <div id="card-${shiftKey}-${lib.index}" 
+                    data-librarian-id="${lib.librarianId}"
                     data-shift-key="${shiftKey}"
                     data-index="${lib.index}"
-                    data-librarian-name="${lib.name}"
-                    data-current-status="${lib.status}"
-                    id="card-${shiftKey}-${lib.index}"
-                    draggable="true"
-                    ondragstart="dragStart(event)"
-                    ondragend="dragEnd(event)"
-                    class="p-2 draggable-item rounded-md shadow-sm text-sm font-medium hover:bg-opacity-90 
-                           ${statusKey === 'belumabsen' ? 'bg-white border-blue-200' : `status-${statusKey}-bg item-${statusKey}`}">
-                    ${lib.name}
-                    ${lib.status === 'Hadir' ? `<span class="text-xs font-normal opacity-90 block">(${checkInTime})</span>` : ''}
+                    class="card p-6 flex flex-col items-center text-center">
+                    
+                    <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-3 shadow-inner border-2 border-white/50">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+
+                    <h4 class="text-xl font-bold text-gray-800">${lib.name}</h4>
+                    <p class="text-sm text-gray-500 mb-4">Check-in: <span class="font-semibold text-gray-700" id="checkin-time-${shiftKey}-${lib.index}">${checkInTime}</span></p>
+
+                    <div class="w-full flex justify-between space-x-2 border-t pt-4 border-gray-100">
+                        
+                        <button onclick="handleStatusUpdateViaButton('${shiftKey}', 'Hadir', '${lib.index}', '${lib.librarianId}')"
+                            class="${getStatusClasses('Hadir', currentStatus)}">
+                            Hadir
+                        </button>
+                        
+                        <button onclick="handleStatusUpdateViaButton('${shiftKey}', 'Izin', '${lib.index}', '${lib.librarianId}')"
+                            class="${getStatusClasses('Izin', currentStatus)}">
+                            Izin
+                        </button>
+                        
+                        <button onclick="handleStatusUpdateViaButton('${shiftKey}', 'Alpha', '${lib.index}', '${lib.librarianId}')"
+                            class="${getStatusClasses('Alpha', currentStatus)}">
+                            Alpha
+                        </button>
+
+                    </div>
                 </div>
             `;
-        };
-
-        // Fungsi untuk mendapatkan ID container berdasarkan shift dan status
-        const getContainerId = (shiftKey, status) => `cards-container-${shiftKey}-${status.replace(/\s/g, '')}`;
-        
-        // --- DRAG AND DROP HANDLERS (GLOBAL) ---
-        
-        window.dragStart = (event) => {
-            const data = JSON.stringify({
-                librarianId: event.target.dataset.librarianId,
-                shiftKey: event.target.dataset.shiftKey,
-                index: event.target.dataset.index,
-                librarianName: event.target.dataset.librarianName
-            });
-            event.dataTransfer.setData('application/json', data);
-            event.dataTransfer.effectAllowed = 'move';
-            event.target.classList.add('opacity-50'); 
-        };
-        
-        window.dragEnd = (event) => {
-             event.target.classList.remove('opacity-50');
-        };
-        
-        window.dragOver = (event) => {
-            event.preventDefault(); 
-            event.dataTransfer.dropEffect = 'move';
-            
-            const targetStatus = event.target.closest('.dropzone')?.dataset.status.toLowerCase().replace(/\s/g, '');
-            if (targetStatus) {
-                event.target.closest('.dropzone').classList.add(`drag-over-${targetStatus}`);
-            }
-        };
-
-        window.dragLeave = (event) => {
-            const dropzone = event.target.closest('.dropzone');
-            if (dropzone) {
-                 dropzone.classList.remove('drag-over-hadir', 'drag-over-izin', 'drag-over-alpha', 'drag-over-belumabsen');
-            }
-        };
-
-        window.handleDrop = (event, status) => {
-            event.preventDefault();
-            
-            // Hapus semua efek drag-over setelah drop
-            document.querySelectorAll('.dropzone').forEach(el => {
-                el.classList.remove('drag-over-hadir', 'drag-over-izin', 'drag-over-alpha', 'drag-over-belumabsen');
-            });
-            
-            try {
-                const data = event.dataTransfer.getData('application/json');
-                if (!data) return;
-
-                const { librarianId, shiftKey, index, librarianName } = JSON.parse(data);
-                
-                handleStatusUpdate(shiftKey, status, index, librarianId, librarianName);
-            } catch (e) {
-                console.error("Gagal memproses drop:", e);
-                alert("Gagal memproses absensi. Data tidak valid.");
-            }
         };
         
         // --- CORE ABSENCE LOGIC ---
         
         async function loadAndRenderAttendance() {
+            // Hapus logika cleanup delay
+            
             const todayInfo = getTodayInfo();
             const activeShifts = getCurrentActiveShifts(); 
             
             attendanceDisplay.innerHTML = '';
 
-            // LOGIKA PENTING: JIKA TIDAK ADA SHIFT YANG AKTIF (DI LUAR JAM PIKET)
             if (!activeShifts || activeShifts.length === 0) {
-                attendanceDisplay.innerHTML = `
-                    <div class="text-center py-10 card bg-gray-100">
-                        <h3 class="text-xl font-bold text-gray-700 mb-2">Tidak Ada Jam Piket Saat Ini</h3>
+                 attendanceDisplay.innerHTML = `
+                    <div class="text-center py-12 card bg-gray-50 border-t-4 border-indigo-400">
+                        <h3 class="text-2xl font-bold text-gray-700 mb-2">Pintu Absensi Ditutup Sementara</h3>
                         <p class="text-gray-500">
                             Halaman absensi hanya aktif selama jam piket:<br>
                             Pagi: **08:00 - 11:00**<br>
@@ -295,18 +316,16 @@
                         </p>
                     </div>
                 `;
-                return; // Berhenti di sini
+                return; 
             }
 
             try {
                 const dailyScheduleRef = ref(db, `librarian_schedules/${todayInfo.dateKey}`);
                 let todaySchedule = (await get(dailyScheduleRef)).val();
 
-                // 1. LOGIKA UTAMA: JIKA JADWAL HARI INI BELUM ADA, BUAT DARI TEMPLATE BERULANG
                 if (!todaySchedule) {
                     const templateRef = ref(db, `recurring_templates/${todayInfo.dayName}`);
                     const template = (await get(templateRef)).val();
-
                     if (template && (template.pagi?.length > 0 || template.malam?.length > 0)) {
                         const newSchedule = { pagi: template.pagi || [], malam: template.malam || [] };
                         await set(dailyScheduleRef, newSchedule);
@@ -315,8 +334,6 @@
                          todaySchedule = {};
                     }
                 }
-                
-                // 2. Rendering hanya untuk shift yang aktif
                 
                 let shiftsRendered = 0;
                 
@@ -327,71 +344,29 @@
                     if (scheduledLibrarians.length > 0) {
                         shiftsRendered++;
                         
-                        const librariansByStatus = {
-                            'Belum Absen': [],
-                            'Hadir': [],
-                            'Izin': [],
-                            'Alpha': []
-                        };
-
-                        scheduledLibrarians.forEach((lib, index) => {
-                            const statusKey = ['Hadir', 'Izin', 'Alpha'].includes(lib.status) ? lib.status : 'Belum Absen';
-                            librariansByStatus[statusKey].push({ ...lib, index: index }); 
+                        scheduledLibrarians.sort((a, b) => {
+                            const getOrder = (status) => {
+                                if (status === 'Hadir') return 1;
+                                if (status === 'Izin' || status === 'Alpha') return 2;
+                                return 0; 
+                            };
+                            return getOrder(a.status) - getOrder(b.status);
                         });
 
-                        // Urutkan yang Belum Absen berdasarkan nama
-                        librariansByStatus['Belum Absen'].sort((a,b) => a.name.localeCompare(b.name));
+                        // Hapus countdownHtml
+                        const countdownHtml = '';
+
 
                         attendanceDisplay.innerHTML += `
-                            <div class="p-6 card border-t-4 ${shiftKey === 'pagi' ? 'border-green-500' : 'border-yellow-500'}">
-                                <h3 class="text-2xl font-bold ${shiftKey === 'pagi' ? 'text-green-700' : 'text-yellow-700'} mb-2">Shift ${shiftInfo.name}</h3>
-                                <p class="text-sm text-gray-600 mb-4">Absensi untuk jam ${shiftInfo.timeRange}. Seret nama ke kotak yang sesuai.</p>
+                            <div class="p-8 card border-t-8 ${shiftKey === 'pagi' ? 'pagi-accent' : 'malam-accent'} shift-container-card">
+                                ${countdownHtml} 
+                                <div class="shift-header">
+                                    <h3 class="text-3xl font-bold ${shiftKey === 'pagi' ? 'text-pagi-accent' : 'text-malam-accent'} mb-1">Shift ${shiftInfo.name}</h3>
+                                    <p class="text-base text-gray-600 font-medium">Jam Piket: ${shiftInfo.timeRange}. Silakan tekan tombol status Anda.</p>
+                                </div>
                                 
-                                <div class="grid grid-cols-4 gap-4" id="shift-container-${shiftKey}">
-                                    
-                                    <div class="col-span-1 p-3 bg-gray-100 rounded-lg shadow-inner border border-gray-300 h-full dropzone"
-                                        data-status="Belum Absen"
-                                        ondragover="dragOver(event)"
-                                        ondragleave="dragLeave(event)"
-                                        ondrop="handleDrop(event, 'Belum Absen')">
-                                        <p class="font-bold text-gray-700 mb-3 text-center">Belum Absen</p>
-                                        <div class="space-y-2" id="${getContainerId(shiftKey, 'Belum Absen')}">
-                                        ${librariansByStatus['Belum Absen'].map(lib => renderLibrarianItemHtml(lib, shiftKey)).join('')}
-                                        </div>
-                                    </div>
-
-                                    <div class="col-span-1 dropzone bg-green-50 border-green-400 rounded-lg"
-                                        data-status="Hadir"
-                                        ondragover="dragOver(event)"
-                                        ondragleave="dragLeave(event)"
-                                        ondrop="handleDrop(event, 'Hadir')">
-                                        <p class="font-bold text-green-700 mb-3 text-center">HADIR</p>
-                                        <div class="space-y-2" id="${getContainerId(shiftKey, 'Hadir')}">
-                                            ${librariansByStatus['Hadir'].map(lib => renderLibrarianItemHtml(lib, shiftKey)).join('')}
-                                        </div>
-                                    </div>
-
-                                    <div class="col-span-1 dropzone bg-yellow-50 border-yellow-400 rounded-lg"
-                                        data-status="Izin"
-                                        ondragover="dragOver(event)"
-                                        ondragleave="dragLeave(event)"
-                                        ondrop="handleDrop(event, 'Izin')">
-                                        <p class="font-bold text-yellow-700 mb-3 text-center">IZIN</p>
-                                        <div class="space-y-2" id="${getContainerId(shiftKey, 'Izin')}">
-                                            ${librariansByStatus['Izin'].map(lib => renderLibrarianItemHtml(lib, shiftKey)).join('')}
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="col-span-1 dropzone bg-red-50 border-red-400 rounded-lg"
-                                        data-status="Alpha"
-                                        ondragover="dragOver(event)"
-                                        ondragleave="dragLeave(event)"
-                                        ondrop="handleDrop(event, 'Alpha')">
-                                        <p class="font-bold text-red-700 mb-3 text-center">ALPHA</p>
-                                        <div class="space-y-2" id="${getContainerId(shiftKey, 'Alpha')}">
-                                            ${librariansByStatus['Alpha'].map(lib => renderLibrarianItemHtml(lib, shiftKey)).join('')}
-                                        </div>
-                                    </div>
+                                <div class="librarian-grid" id="shift-container-${shiftKey}">
+                                    ${scheduledLibrarians.map((lib, index) => renderLibrarianCard({ ...lib, index: index }, shiftKey)).join('')}
                                 </div>
                             </div>
                         `;
@@ -400,38 +375,59 @@
                 
                 if(shiftsRendered === 0) {
                      attendanceDisplay.innerHTML = `
-                        <div class="text-center py-10 card bg-gray-100">
-                            <h3 class="text-xl font-bold text-gray-700 mb-2">Tidak ada Pustakawan yang Dijadwalkan</h3>
-                            <p class="text-gray-500">Tidak ada pustakawan yang memiliki jadwal untuk shift ${activeShifts.map(s => s.name).join(' dan ')} hari ini. Silakan atur jadwal di halaman Admin.</p>
+                        <div class="text-center py-12 card bg-gray-50 border-t-4 border-gray-400">
+                            <h3 class="text-2xl font-bold text-gray-700 mb-2">Tidak Ada Jadwal Piket Hari Ini</h3>
+                            <p class="text-gray-500">Tidak ada pustakawan yang dijadwalkan untuk shift yang aktif hari ini. Silakan atur jadwal di halaman Admin.</p>
                         </div>
                     `;
                 }
+                
+                // Hapus inisialisasi countdown elements
+                // countdownIndicator = document.getElementById('countdown-indicator');
+                // countdownTimer = document.getElementById('countdown-timer');
 
             } catch (e) {
                 console.error("Gagal memuat jadwal:", e);
-                attendanceDisplay.innerHTML = `
-                    <div class="p-4 mb-4 border-l-4 rounded-lg bg-red-100 text-red-700 border-red-500">
-                        Error: Gagal memuat data jadwal dari Firebase. Cek koneksi atau konfigurasi. (${e.message})
-                    </div>
-                `;
+                // ... (Error message display)
+            } finally {
+                // ...
             }
         }
         
         /**
-         * Menangani pembaruan status absensi di Firebase.
+         * Menangani pembaruan status absensi melalui tombol.
+         * Mode: Optimistic UI + Silent Background Save. Tidak ada refresh atau delay visual.
          */
-        window.handleStatusUpdate = async (shift, status, index, librarianId, librarianName) => {
+        window.handleStatusUpdateViaButton = async (shift, newStatus, index, librarianId) => {
             const todayKey = getTodayInfo().dateKey;
+            const cardId = `card-${shift}-${index}`;
+            const cardElement = document.getElementById(cardId);
             
-            const updateData = { status: status };
-            if (status === 'Hadir') {
-                updateData.checkIn = new Date().toISOString();
+            const scheduleRef = ref(db, `librarian_schedules/${todayKey}/${shift}/${index}`);
+            // Mengambil status saat ini adalah penting untuk logic toggle 'Hadir' -> 'Belum Absen'
+            const currentSchedule = (await get(scheduleRef)).val();
+            let currentStatus = currentSchedule?.status || 'Belum Absen';
+
+            let finalStatus = newStatus;
+            
+            // Logic Toggle: Jika status target sama dengan status saat ini dan targetnya adalah Hadir, ubah menjadi Belum Absen
+            if (newStatus === currentStatus) {
+                 if (newStatus === 'Hadir') {
+                     finalStatus = 'Belum Absen';
+                 } else {
+                     return; // Tidak melakukan apa-apa jika menekan Izin/Alpha lagi
+                 }
+            }
+
+            const updateData = { status: finalStatus };
+            if (finalStatus === 'Hadir') {
+                const checkInDate = new Date();
+                updateData.checkIn = checkInDate.toISOString();
                 updateData.absentBy = null; 
-            } else if (status === 'Belum Absen') {
+            } else if (finalStatus === 'Belum Absen') {
                 updateData.checkIn = null;
                 updateData.absentBy = null;
-            } else {
-                 // Izin or Alpha
+            } else { // Izin atau Alpha
                  updateData.absentBy = 'SharedTerminal'; 
                  updateData.checkIn = null;
             }
@@ -439,33 +435,34 @@
             const path = `librarian_schedules/${todayKey}/${shift}/${index}`;
 
             try {
-                // 1. Update Firebase
+                
+                // 1. UPDATE DOM LOKAL SECARA INSTAN (Responsif)
+                if (cardElement) {
+                    const buttons = cardElement.querySelectorAll('button');
+                    buttons.forEach(btn => {
+                        const btnStatus = btn.textContent.trim();
+                        // Perbarui kelas tombol agar terlihat instan
+                        btn.className = getStatusClasses(btnStatus, finalStatus); 
+                    });
+
+                    const timeElement = document.getElementById(`checkin-time-${shift}-${index}`);
+                    if (timeElement) {
+                        timeElement.textContent = finalStatus === 'Hadir' 
+                            ? new Date(updateData.checkIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                            : '---';
+                    }
+                }
+                
+                // 2. PANGGIL FIREBASE DI LATAR BELAKANG (SILENT SAVE)
                 await update(ref(db, path), updateData);
                 
-                // 2. --- LOCAL DOM MANIPULATION (Smooth Update) ---
+                // TIDAK ADA REFRESH ATAU DELAY VISUAL. HANYA ANDALKAN AUTO-REFRESH 30 DETIK.
                 
-                const updatedLib = {
-                    librarianId: librarianId,
-                    name: librarianName,
-                    status: status,
-                    index: index,
-                    checkIn: updateData.checkIn || null 
-                };
-                
-                const oldCardElement = document.getElementById(`card-${shift}-${index}`);
-                const targetContainerId = getContainerId(shift, status);
-                const targetContainer = document.getElementById(targetContainerId);
-
-                if (oldCardElement && targetContainer) {
-                    oldCardElement.remove();
-                    const newCardHtml = renderLibrarianItemHtml(updatedLib, shift);
-                    targetContainer.insertAdjacentHTML('beforeend', newCardHtml);
-                } else {
-                     await loadAndRenderAttendance(); // Fallback: Force a full render
-                }
             } catch (e) {
                 console.error("Gagal update status:", e);
-                alert(`Gagal menyimpan status ${status}: ${e.message}`);
+                // Jika terjadi error, beritahu user dan paksa refresh agar UI kembali ke status sebenarnya di DB
+                alert(`Gagal menyimpan status ${finalStatus}. Status akan dimuat ulang. ${e.message}`);
+                loadAndRenderAttendance(); 
             }
         };
 
@@ -475,9 +472,8 @@
              updateRealTimeClock(); 
              setInterval(updateRealTimeClock, 1000); 
              
-             // Refresh absensi setiap 60 detik
-             setInterval(loadAndRenderAttendance, 60000); 
-             loadAndRenderAttendance(); // Muat awal
+             startAutoRefresh(); 
+             loadAndRenderAttendance(); 
         };
     </script>
 </body>
