@@ -1,480 +1,255 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi Pustakawan | Terminal Absen</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        
-        /* Tema Warna & Font */
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f7f9fc; 
-        }
-        
-        /* Efek Kartu Modern */
-        .card {
-            background-color: white;
-            border-radius: 16px; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-            transition: opacity 0.3s ease; 
-        }
-        
-        /* Peningkatan Visual Clock */
-        #real-time-clock {
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
-            letter-spacing: -1px;
-        }
-
-        /* Loading/Disable State for Card (Tidak digunakan) */
-        .card.is-updating {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        /* Tombol Status */
-        .status-button {
-            /* Hapus transisi untuk responsif instan */
-            font-weight: 600;
-        }
-        .status-button.hover\:opacity-80 { transition: opacity 0.15s ease; } 
-
-        .status-hadir { background-color: #10b981; border-color: #059669; } /* Emerald */
-        .status-izin { background-color: #f59e0b; border-color: #d97706; } /* Amber */
-        .status-alpha { background-color: #ef4444; border-color: #dc2626; } /* Red */
-        .status-belumabsen { background-color: #9ca3af; border-color: #6b7280; } /* Gray */
-        
-        /* Floating Button Admin (AKSEN CYAN) */
-        .admin-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background-color: #06b6d4; /* Cyan-500 */
-            color: white;
-            box-shadow: 0 6px 10px rgba(6, 182, 212, 0.4); /* Cyan-500 Shadow */
-            transition: background-color 0.3s, transform 0.1s;
-            z-index: 100;
-        }
-        .admin-button:hover {
-            background-color: #0891b2; /* Cyan-600 */
-            transform: scale(1.05);
-        }
-        
-        /* Grid Responsiveness */
-        .librarian-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 24px;
-        }
-
-        /* Style untuk penempatan Indikator di dalam Shift Card */
-        .shift-container-card {
-             position: relative; 
-        }
-        .shift-header {
-            margin-bottom: 24px; 
-        }
-        
-        /* AKSEN WARNA SHIFT BARU */
-        /* Shift Pagi (Cyan) */
-        .pagi-accent {
-            border-color: #06b6d4; /* Cyan-500 untuk border-t */
-        }
-        .text-pagi-accent {
-            color: #075985; /* Cyan-800 untuk teks judul */
-        }
-        /* Shift Malam (Sky Blue) */
-        .malam-accent {
-            border-color: #38bdf8; /* Sky-400 untuk border-t */
-        }
-        .text-malam-accent {
-            color: #0284c7; /* Sky-600 untuk teks judul */
-        }
-
-        /* GAYA INDICATOR (DIHAPUS DARI JS, JADI INI HANYA PLACEHOLDER) */
-        #countdown-indicator {
-            display: none; /* Sembunyikan sepenuhnya */
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Absensi Pustakawan | Terminal Absen</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f7f9fc;
+    }
+    .card {
+      background-color: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                  0 10px 15px -3px rgba(0, 0, 0, 0.05);
+      transition: opacity 0.3s ease;
+    }
+    #real-time-clock {
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
+      letter-spacing: -1px;
+    }
+    .status-button {
+      font-weight: 600;
+      transition: opacity 0.15s ease, background-color 0.1s;
+    }
+    .status-hadir { background-color: #10b981; border-color: #059669; }
+    .status-izin { background-color: #f59e0b; border-color: #d97706; }
+    .status-alpha { background-color: #ef4444; border-color: #dc2626; }
+    .status-belumabsen { background-color: #9ca3af; border-color: #6b7280; }
+    .admin-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background-color: #06b6d4;
+      color: white;
+      box-shadow: 0 6px 10px rgba(6, 182, 212, 0.4);
+      transition: background-color 0.3s, transform 0.1s;
+      z-index: 100;
+    }
+    .admin-button:hover {
+      background-color: #0891b2;
+      transform: scale(1.05);
+    }
+    .librarian-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .shift-header { margin-bottom: 24px; }
+    .pagi-accent { border-color: #06b6d4; }
+    .text-pagi-accent { color: #075985; }
+    .malam-accent { border-color: #38bdf8; }
+    .text-malam-accent { color: #0284c7; }
+  </style>
 </head>
 <body>
+  <div id="app-container" class="min-h-screen flex flex-col items-center justify-center p-4 relative">
+    <header class="w-full max-w-6xl mb-8 text-center">
+      <h1 id="real-time-clock" class="text-6xl md:text-7xl font-extrabold text-gray-800 mb-0">00:00:00</h1>
+      <p id="today-display" class="text-xl font-semibold text-gray-500 mt-1">Loading...</p>
+    </header>
 
-    <div id="app-container" class="min-h-screen flex flex-col items-center justify-center p-4 relative">
-        
-        <header class="w-full max-w-6xl mb-8 text-center">
-            <h1 class="text-6xl md:text-7xl font-extrabold text-gray-800 mb-0 transition-colors duration-500" id="real-time-clock">00:00:00</h1>
-            <p class="text-xl font-semibold text-gray-500 mt-1" id="today-display">Loading...</p>
-        </header>
+    <main class="w-full max-w-6xl">
+      <div id="attendance-display" class="space-y-10"></div>
+    </main>
 
-        <main id="main-attendance-view" class="w-full max-w-6xl">
-            
-            <div id="attendance-display" class="space-y-10">
-                </div>
+    <a href="admin.html" class="admin-button" title="Pergi ke Halaman Admin">
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor"
+           stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+    </a>
+  </div>
 
-        </main>
+  <!-- =============================== -->
+  <!--        OPTIMIZED SCRIPT        -->
+  <!-- =============================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getDatabase, ref, get, set, update, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        <a href="admin.html" class="admin-button" title="Pergi ke Halaman Admin">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+    // === FIREBASE CONFIG ===
+    const app = initializeApp({
+      apiKey: "AIzaSyBb-hbcc_ZE2hH6dlc81HbIGMQi96y4qYI",
+      authDomain: "absensi-7ef83.firebaseapp.com",
+      databaseURL: "https://absensi-7ef83-default-rtdb.firebaseio.com",
+      projectId: "absensi-7ef83",
+      storageBucket: "absensi-7ef83.firebasestorage.app",
+      messagingSenderId: "661765044421",
+      appId: "1:661765044421:web:b8578a195a6d208dc4d8ac"
+    });
+    const db = getDatabase(app);
+
+    // === KONSTANTA ===
+    const DAYS = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const SHIFT = {
+      pagi: { name: 'Pagi', range: '08:00 - 11:00', start: 480, end: 660 },
+      malam: { name: 'Malam', range: '21:00 - 22:30', start: 1260, end: 1350 }
+    };
+
+    const todayDisplay = document.getElementById('today-display');
+    const attendanceDisplay = document.getElementById('attendance-display');
+    const realTimeClock = document.getElementById('real-time-clock');
+
+    const getTodayInfo = () => {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return {
+        key: `${y}-${m}-${d}`,
+        name: DAYS[now.getDay()],
+        formatted: now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+      };
+    };
+
+    const updateClock = () => {
+      const now = new Date();
+      realTimeClock.textContent = now.toLocaleTimeString('id-ID', { hour12: false });
+      if (now.getSeconds() === 0 || todayDisplay.textContent === 'Loading...')
+        todayDisplay.textContent = getTodayInfo().formatted;
+    };
+
+    const getActiveShift = () => {
+      const now = new Date();
+      const totalMin = now.getHours() * 60 + now.getMinutes();
+      return Object.entries(SHIFT)
+        .filter(([_, s]) => totalMin >= s.start && totalMin < s.end)
+        .map(([k, s]) => ({ key: k, ...s }));
+    };
+
+    const btnClass = (status, cur) => {
+      const base = "status-button px-4 py-2 text-white rounded-full text-sm flex-1 mx-1 border-b-4";
+      const map = { Hadir: 'status-hadir', Izin: 'status-izin', Alpha: 'status-alpha', 'Belum Absen': 'status-belumabsen' };
+      return status === cur ? `${base} ${map[status]} ring-2 ring-gray-300` : `${base} bg-gray-200 text-gray-700 opacity-50 hover:opacity-100 border-gray-300`;
+    };
+
+    const renderCard = (lib, shiftKey) => {
+      const time = lib.checkIn ? new Date(lib.checkIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '---';
+      const status = ['Hadir', 'Izin', 'Alpha'].includes(lib.status) ? lib.status : 'Belum Absen';
+      const id = `card-${shiftKey}-${lib.index}`;
+      return `
+        <div id="${id}" data-shift="${shiftKey}" data-index="${lib.index}" class="card p-6 flex flex-col items-center text-center">
+          <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-3 shadow-inner border-2 border-white/50">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
             </svg>
-        </a>
-    </div>
+          </div>
+          <h4 class="text-xl font-bold text-gray-800">${lib.name}</h4>
+          <p class="text-sm text-gray-500 mb-4">Check-in: <span class="font-semibold" id="checkin-${shiftKey}-${lib.index}">${time}</span></p>
+          <div class="w-full flex justify-between space-x-2 border-t pt-4 border-gray-100">
+            ${['Hadir','Izin','Alpha'].map(s=>`<button data-status="${s}" class="${btnClass(s,status)}">${s}</button>`).join('')}
+          </div>
+        </div>`;
+    };
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getDatabase, ref, get, update, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+    const renderAttendance = (schedule) => {
+      attendanceDisplay.innerHTML = '';
+      const shifts = getActiveShift();
+      if (!shifts.length) {
+        attendanceDisplay.innerHTML = `
+          <div class="text-center py-12 card bg-gray-50 border-t-4 border-indigo-400">
+            <h3 class="text-2xl font-bold text-gray-700 mb-2">Pintu Absensi Ditutup</h3>
+            <p class="text-gray-500">Hanya aktif saat jam piket: Pagi 08:00–11:00, Malam 21:00–22:30</p>
+          </div>`;
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      shifts.forEach(s => {
+        const list = schedule?.[s.key] || [];
+        if (!list.length) return;
+        const div = document.createElement('div');
+        div.className = `p-8 card border-t-8 ${s.key === 'pagi' ? 'pagi-accent' : 'malam-accent'}`;
+        div.innerHTML = `
+          <div class="shift-header">
+            <h3 class="text-3xl font-bold ${s.key === 'pagi' ? 'text-pagi-accent' : 'text-malam-accent'} mb-1">Shift ${s.name}</h3>
+            <p class="text-base text-gray-600">Jam Piket: ${s.range}</p>
+          </div>
+          <div class="librarian-grid">${list.map((lib,i)=>renderCard({...lib,index:i},s.key)).join('')}</div>`;
+        frag.appendChild(div);
+      });
+      attendanceDisplay.appendChild(frag);
+    };
 
-        // =================================================================
-        // KONFIGURASI FIREBASE (HARUS SAMA DENGAN ADMIN.HTML)
-        // =================================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyBb-hbcc_ZE2hH6dlc81HbIGMQi96y4qYI",
-            authDomain: "absensi-7ef83.firebaseapp.com",
-            databaseURL: "https://absensi-7ef83-default-rtdb.firebaseio.com",
-            projectId: "absensi-7ef83",
-            storageBucket: "absensi-7ef83.firebasestorage.app",
-            messagingSenderId: "661765044421",
-            appId: "1:661765044421:web:b8578a195a6d208dc4d8ac"
-        };
-        // =================================================================
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // Element DOM
-        const todayDisplay = document.getElementById('today-display');
-        const attendanceDisplay = document.getElementById('attendance-display');
-        const realTimeClock = document.getElementById('real-time-clock');
-        
-        // Hapus variabel countdownIndicator dan countdownTimer karena tidak digunakan lagi
-        // let countdownIndicator = null; 
-        // let countdownTimer = null; 
-        
-        const DAYS_OF_WEEK = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-        
-        const SHIFT_TIMES = {
-            pagi: { name: 'Pagi', timeRange: '08:00 - 11:00', startCheckIn: 8 * 60, endCheckIn: 11 * 60 },
-            malam: { name: 'Malam', timeRange: '21:00 - 22:30', startCheckIn: 21 * 60, endCheckIn: 22 * 60 + 30 }
-        };
-
-        // --- REFRESH CONTROL (HANYA AUTO REFRESH) ---
-        const REFRESH_INTERVAL_SECONDS = 30; 
-        // POST_ACTION_DELAY_SECONDS dihapus
-        // let refreshTimeoutId = null; // Dihapus
-        // let countdownIntervalId = null; // Dihapus
-
-        /**
-         * Fungsi debouncedLoadAndRender DIHAPUS karena kita tidak ingin ada delay visual
-         * setelah menekan tombol.
-         */
-
-        /**
-         * Memulai interval auto-refresh 30 detik.
-         */
-        function startAutoRefresh() {
-            clearInterval(window.autoRefreshInterval); 
-            window.autoRefreshInterval = setInterval(() => {
-                 // Tidak perlu cek refreshTimeoutId lagi
-                 loadAndRenderAttendance();
-            }, REFRESH_INTERVAL_SECONDS * 1000);
+    const startListener = async () => {
+      const today = getTodayInfo();
+      const dailyRef = ref(db, `librarian_schedules/${today.key}`);
+      try {
+        let schedule = (await get(dailyRef)).val();
+        if (!schedule) {
+          const template = (await get(ref(db, `recurring_templates/${today.name}`))).val();
+          if (template) {
+            schedule = { pagi: template.pagi || [], malam: template.malam || [] };
+            await set(dailyRef, schedule);
+          }
         }
+        onValue(dailyRef, snap => renderAttendance(snap.val()));
+      } catch (e) {
+        console.error(e);
+        attendanceDisplay.innerHTML = `<div class="text-center py-12 card bg-red-100 border-t-4 border-red-500 text-red-700">
+          <h3 class="text-xl font-bold mb-2">Gagal Memuat Data</h3>
+          <p>Cek koneksi internet Anda.</p></div>`;
+      }
+    };
 
+    // === HANDLER BUTTON (Delegasi Event) ===
+    attendanceDisplay.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-status]');
+      if (!btn) return;
+      const card = btn.closest('[data-shift]');
+      const shift = card.dataset.shift;
+      const index = card.dataset.index;
+      const status = btn.dataset.status;
+      const todayKey = getTodayInfo().key;
+      const path = `librarian_schedules/${todayKey}/${shift}/${index}`;
 
-        // --- UTILITY FUNCTIONS ---
-        
-        function getTodayInfo() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const dayOfWeekIndex = now.getDay(); 
-            
-            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const todayFormatted = now.toLocaleDateString('id-ID', dateOptions);
+      const active = card.querySelector('.ring-2');
+      const current = active ? active.textContent.trim() : 'Belum Absen';
+      let finalStatus = (status === 'Hadir' && current === 'Hadir') ? 'Belum Absen' : status;
+      if (status !== 'Hadir' && current === status) return;
 
-            return {
-                dateKey: `${year}-${month}-${day}`, 
-                dayName: DAYS_OF_WEEK[dayOfWeekIndex], 
-                formatted: todayFormatted
-            };
-        }
+      const now = new Date();
+      const updateData = {
+        status: finalStatus,
+        checkIn: finalStatus === 'Hadir' ? now.toISOString() : null,
+        absentBy: finalStatus !== 'Belum Absen' && finalStatus !== 'Hadir' ? 'SharedTerminal' : null
+      };
 
-        function updateRealTimeClock() {
-            const now = new Date();
-            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-            const timeString = now.toLocaleTimeString('id-ID', timeOptions);
-            realTimeClock.textContent = timeString;
-            
-            if (now.getSeconds() === 0 || todayDisplay.textContent === 'Loading...') {
-                todayDisplay.textContent = getTodayInfo().formatted;
-            }
-        }
+      card.querySelectorAll('button').forEach(b => b.className = btnClass(b.textContent.trim(), finalStatus));
+      const timeEl = card.querySelector(`#checkin-${shift}-${index}`);
+      if (timeEl) timeEl.textContent = finalStatus === 'Hadir' ? now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '---';
+      try { await update(ref(db, path), updateData); }
+      catch (err) { console.error(err); alert('Gagal menyimpan status'); }
+    });
 
-        function getCurrentActiveShifts() {
-            const now = new Date();
-            const currentHour = now.getHours();
-            const currentMinute = now.getMinutes();
-            const currentTimeInMinutes = currentHour * 60 + currentMinute;
-            
-            const activeShifts = [];
-
-            if (currentTimeInMinutes >= SHIFT_TIMES.pagi.startCheckIn && currentTimeInMinutes < SHIFT_TIMES.pagi.endCheckIn) {
-                activeShifts.push({ key: 'pagi', ...SHIFT_TIMES.pagi });
-            }
-            
-            if (currentTimeInMinutes >= SHIFT_TIMES.malam.startCheckIn && currentTimeInMinutes < SHIFT_TIMES.malam.endCheckIn) {
-                activeShifts.push({ key: 'malam', ...SHIFT_TIMES.malam });
-            }
-            
-            return activeShifts; 
-        }
-        
-        const getStatusClasses = (status, currentStatus) => {
-            const base = "status-button px-4 py-2 text-white rounded-full text-sm hover:opacity-80 flex-1 mx-1 border-b-4"; 
-            
-            if (status === currentStatus) {
-                const activeClasses = `opacity-100 shadow-md ${status.toLowerCase() === 'hadir' ? 'status-hadir' : status.toLowerCase() === 'izin' ? 'status-izin' : status.toLowerCase() === 'alpha' ? 'status-alpha' : 'status-belumabsen'} ring-2 ring-offset-2 ring-white/50`;
-                return `${base} ${activeClasses}`;
-            } else {
-                const inactiveClasses = `bg-gray-200 text-gray-700 opacity-50 hover:opacity-100`;
-                return `${base.replace('text-white', '')} ${inactiveClasses} border-none`;
-            }
-        }
-        
-
-        // Fungsi untuk merender kartu profil pustakawan
-        const renderLibrarianCard = (lib, shiftKey) => {
-            const checkInTime = lib.checkIn ? new Date(lib.checkIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '---';
-            const currentStatus = ['Hadir', 'Izin', 'Alpha'].includes(lib.status) ? lib.status : 'Belum Absen';
-
-            return `
-                <div id="card-${shiftKey}-${lib.index}" 
-                    data-librarian-id="${lib.librarianId}"
-                    data-shift-key="${shiftKey}"
-                    data-index="${lib.index}"
-                    class="card p-6 flex flex-col items-center text-center">
-                    
-                    <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-3 shadow-inner border-2 border-white/50">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                    </div>
-
-                    <h4 class="text-xl font-bold text-gray-800">${lib.name}</h4>
-                    <p class="text-sm text-gray-500 mb-4">Check-in: <span class="font-semibold text-gray-700" id="checkin-time-${shiftKey}-${lib.index}">${checkInTime}</span></p>
-
-                    <div class="w-full flex justify-between space-x-2 border-t pt-4 border-gray-100">
-                        
-                        <button onclick="handleStatusUpdateViaButton('${shiftKey}', 'Hadir', '${lib.index}', '${lib.librarianId}')"
-                            class="${getStatusClasses('Hadir', currentStatus)}">
-                            Hadir
-                        </button>
-                        
-                        <button onclick="handleStatusUpdateViaButton('${shiftKey}', 'Izin', '${lib.index}', '${lib.librarianId}')"
-                            class="${getStatusClasses('Izin', currentStatus)}">
-                            Izin
-                        </button>
-                        
-                        <button onclick="handleStatusUpdateViaButton('${shiftKey}', 'Alpha', '${lib.index}', '${lib.librarianId}')"
-                            class="${getStatusClasses('Alpha', currentStatus)}">
-                            Alpha
-                        </button>
-
-                    </div>
-                </div>
-            `;
-        };
-        
-        // --- CORE ABSENCE LOGIC ---
-        
-        async function loadAndRenderAttendance() {
-            // Hapus logika cleanup delay
-            
-            const todayInfo = getTodayInfo();
-            const activeShifts = getCurrentActiveShifts(); 
-            
-            attendanceDisplay.innerHTML = '';
-
-            if (!activeShifts || activeShifts.length === 0) {
-                 attendanceDisplay.innerHTML = `
-                    <div class="text-center py-12 card bg-gray-50 border-t-4 border-indigo-400">
-                        <h3 class="text-2xl font-bold text-gray-700 mb-2">Pintu Absensi Ditutup Sementara</h3>
-                        <p class="text-gray-500">
-                            Halaman absensi hanya aktif selama jam piket:<br>
-                            Pagi: **08:00 - 11:00**<br>
-                            Malam: **21:00 - 22:30**
-                        </p>
-                    </div>
-                `;
-                return; 
-            }
-
-            try {
-                const dailyScheduleRef = ref(db, `librarian_schedules/${todayInfo.dateKey}`);
-                let todaySchedule = (await get(dailyScheduleRef)).val();
-
-                if (!todaySchedule) {
-                    const templateRef = ref(db, `recurring_templates/${todayInfo.dayName}`);
-                    const template = (await get(templateRef)).val();
-                    if (template && (template.pagi?.length > 0 || template.malam?.length > 0)) {
-                        const newSchedule = { pagi: template.pagi || [], malam: template.malam || [] };
-                        await set(dailyScheduleRef, newSchedule);
-                        todaySchedule = newSchedule;
-                    } else {
-                         todaySchedule = {};
-                    }
-                }
-                
-                let shiftsRendered = 0;
-                
-                activeShifts.forEach(shiftInfo => {
-                    const shiftKey = shiftInfo.key;
-                    const scheduledLibrarians = todaySchedule[shiftKey] || [];
-                    
-                    if (scheduledLibrarians.length > 0) {
-                        shiftsRendered++;
-                        
-                        scheduledLibrarians.sort((a, b) => {
-                            const getOrder = (status) => {
-                                if (status === 'Hadir') return 1;
-                                if (status === 'Izin' || status === 'Alpha') return 2;
-                                return 0; 
-                            };
-                            return getOrder(a.status) - getOrder(b.status);
-                        });
-
-                        // Hapus countdownHtml
-                        const countdownHtml = '';
-
-
-                        attendanceDisplay.innerHTML += `
-                            <div class="p-8 card border-t-8 ${shiftKey === 'pagi' ? 'pagi-accent' : 'malam-accent'} shift-container-card">
-                                ${countdownHtml} 
-                                <div class="shift-header">
-                                    <h3 class="text-3xl font-bold ${shiftKey === 'pagi' ? 'text-pagi-accent' : 'text-malam-accent'} mb-1">Shift ${shiftInfo.name}</h3>
-                                    <p class="text-base text-gray-600 font-medium">Jam Piket: ${shiftInfo.timeRange}. Silakan tekan tombol status Anda.</p>
-                                </div>
-                                
-                                <div class="librarian-grid" id="shift-container-${shiftKey}">
-                                    ${scheduledLibrarians.map((lib, index) => renderLibrarianCard({ ...lib, index: index }, shiftKey)).join('')}
-                                </div>
-                            </div>
-                        `;
-                    }
-                });
-                
-                if(shiftsRendered === 0) {
-                     attendanceDisplay.innerHTML = `
-                        <div class="text-center py-12 card bg-gray-50 border-t-4 border-gray-400">
-                            <h3 class="text-2xl font-bold text-gray-700 mb-2">Tidak Ada Jadwal Piket Hari Ini</h3>
-                            <p class="text-gray-500">Tidak ada pustakawan yang dijadwalkan untuk shift yang aktif hari ini. Silakan atur jadwal di halaman Admin.</p>
-                        </div>
-                    `;
-                }
-                
-                // Hapus inisialisasi countdown elements
-                // countdownIndicator = document.getElementById('countdown-indicator');
-                // countdownTimer = document.getElementById('countdown-timer');
-
-            } catch (e) {
-                console.error("Gagal memuat jadwal:", e);
-                // ... (Error message display)
-            } finally {
-                // ...
-            }
-        }
-        
-        /**
-         * Menangani pembaruan status absensi melalui tombol.
-         * Mode: Optimistic UI + Silent Background Save. Tidak ada refresh atau delay visual.
-         */
-        window.handleStatusUpdateViaButton = async (shift, newStatus, index, librarianId) => {
-            const todayKey = getTodayInfo().dateKey;
-            const cardId = `card-${shift}-${index}`;
-            const cardElement = document.getElementById(cardId);
-            
-            const scheduleRef = ref(db, `librarian_schedules/${todayKey}/${shift}/${index}`);
-            // Mengambil status saat ini adalah penting untuk logic toggle 'Hadir' -> 'Belum Absen'
-            const currentSchedule = (await get(scheduleRef)).val();
-            let currentStatus = currentSchedule?.status || 'Belum Absen';
-
-            let finalStatus = newStatus;
-            
-            // Logic Toggle: Jika status target sama dengan status saat ini dan targetnya adalah Hadir, ubah menjadi Belum Absen
-            if (newStatus === currentStatus) {
-                 if (newStatus === 'Hadir') {
-                     finalStatus = 'Belum Absen';
-                 } else {
-                     return; // Tidak melakukan apa-apa jika menekan Izin/Alpha lagi
-                 }
-            }
-
-            const updateData = { status: finalStatus };
-            if (finalStatus === 'Hadir') {
-                const checkInDate = new Date();
-                updateData.checkIn = checkInDate.toISOString();
-                updateData.absentBy = null; 
-            } else if (finalStatus === 'Belum Absen') {
-                updateData.checkIn = null;
-                updateData.absentBy = null;
-            } else { // Izin atau Alpha
-                 updateData.absentBy = 'SharedTerminal'; 
-                 updateData.checkIn = null;
-            }
-
-            const path = `librarian_schedules/${todayKey}/${shift}/${index}`;
-
-            try {
-                
-                // 1. UPDATE DOM LOKAL SECARA INSTAN (Responsif)
-                if (cardElement) {
-                    const buttons = cardElement.querySelectorAll('button');
-                    buttons.forEach(btn => {
-                        const btnStatus = btn.textContent.trim();
-                        // Perbarui kelas tombol agar terlihat instan
-                        btn.className = getStatusClasses(btnStatus, finalStatus); 
-                    });
-
-                    const timeElement = document.getElementById(`checkin-time-${shift}-${index}`);
-                    if (timeElement) {
-                        timeElement.textContent = finalStatus === 'Hadir' 
-                            ? new Date(updateData.checkIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-                            : '---';
-                    }
-                }
-                
-                // 2. PANGGIL FIREBASE DI LATAR BELAKANG (SILENT SAVE)
-                await update(ref(db, path), updateData);
-                
-                // TIDAK ADA REFRESH ATAU DELAY VISUAL. HANYA ANDALKAN AUTO-REFRESH 30 DETIK.
-                
-            } catch (e) {
-                console.error("Gagal update status:", e);
-                // Jika terjadi error, beritahu user dan paksa refresh agar UI kembali ke status sebenarnya di DB
-                alert(`Gagal menyimpan status ${finalStatus}. Status akan dimuat ulang. ${e.message}`);
-                loadAndRenderAttendance(); 
-            }
-        };
-
-
-        // --- INIT APP ---
-        window.onload = () => {
-             updateRealTimeClock(); 
-             setInterval(updateRealTimeClock, 1000); 
-             
-             startAutoRefresh(); 
-             loadAndRenderAttendance(); 
-        };
-    </script>
+    // === INISIALISASI ===
+    window.onload = () => {
+      updateClock();
+      setInterval(updateClock, 1000);
+      startListener();
+    };
+  </script>
 </body>
 </html>
