@@ -41,21 +41,18 @@
 </head>
 <body>
 
-    <div id="app-container" class="min-h-screen p-4 sm:p-8">
+    <div id="app-container" class="min-h-screen p-4 sm:p-8 flex flex-col">
 
         <header class="flex justify-between items-center mb-6 p-4 bg-white rounded-xl shadow-lg">
             <h1 class="text-2xl font-bold text-gray-800">Manajemen Sistem Absensi</h1>
             <nav>
-                <a href="index.html" class="px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300 shadow-md">
-                    Absensi Pustakawan
+                <a href="index.html" class="px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-blue-600 text-white hover:bg-blue-700 shadow-md">
+                    Kembali ke Absensi
                 </a>
-                <button class="ml-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-blue-600 text-white shadow-md">
-                    Admin
-                </button>
             </nav>
         </header>
 
-        <main class="container-card">
+        <main class="container-card flex-grow">
             <div class="bg-white p-6 rounded-xl shadow-2xl">
                 <div class="flex border-b mb-6">
                     <button id="tab-rekap" onclick="switchTab('rekap')" class="tab-active py-3 px-4 text-sm font-medium rounded-t-lg transition-colors">
@@ -73,8 +70,10 @@
                     </div>
             </div>
         </main>
-
-
+        
+        <footer class="w-full container-card mt-8 text-center text-sm text-gray-500 p-4">
+            &copy; 2025 Sistem Absensi Pustakawan. Start at 17 Nov 2025.
+        </footer>
         <div id="loading-indicator" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden z-50">
             <div class="p-4 bg-white rounded-lg shadow-xl flex items-center">
                 <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -125,7 +124,7 @@
         let currentScheduleTemplate = {}; 
 
 
-        // --- UTILITY FUNCTIONS ---
+        // --- UTILITY FUNCTIONS (NO CHANGE) ---
         function setLoading(show) {
             document.getElementById('loading-indicator').classList.toggle('hidden', !show);
         }
@@ -137,39 +136,22 @@
             return `${y}-${m}-${d}`;
         }
 
-        /**
-         * Mengembalikan tanggal hari Ahad (Sunday) sebagai kunci minggu (YYYY-MM-DD)
-         * dari tanggal yang diberikan.
-         */
         function getSundayOfWeek(dateKey) {
             const [year, month, day] = dateKey.split('-').map(Number);
-            // month - 1 karena Date constructor menggunakan bulan 0-indexed
             const date = new Date(year, month - 1, day); 
-            
-            // Get the day of the week (0 = Sunday)
             const dayOfWeek = date.getDay(); 
-            
-            // Adjust to the previous Sunday
             date.setDate(date.getDate() - dayOfWeek); 
-            
-            // Format back to YYYY-MM-DD
             return formatDateToKey(date); 
         }
 
-        /**
-         * Mengembalikan rentang tanggal Ahad sampai Sabtu dalam format bahasa Indonesia.
-         */
         function formatWeekRange(sundayDateKey) {
             const [year, month, day] = sundayDateKey.split('-').map(Number);
             const sundayDate = new Date(year, month - 1, day); 
             const saturdayDate = new Date(sundayDate);
             saturdayDate.setDate(sundayDate.getDate() + 6);
-
             const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-
             const sundayFormatted = sundayDate.toLocaleDateString('id-ID', dateOptions);
             const saturdayFormatted = saturdayDate.toLocaleDateString('id-ID', dateOptions);
-            
             return `Ahad ${sundayFormatted} - Sabtu ${saturdayFormatted}`;
         }
         
@@ -341,19 +323,16 @@
         window.dragStart = (event) => {
             event.dataTransfer.setData('text/plain', event.target.dataset.librarianId);
             event.dataTransfer.effectAllowed = 'move';
-            // Optional: Add visual feedback for the dragged item
             event.target.classList.add('opacity-50'); 
         };
 
         window.dragEnd = (event) => {
-            // Remove visual feedback
             event.target.classList.remove('opacity-50');
         };
 
         window.dragOver = (event) => {
-            event.preventDefault(); // Mencegah default untuk mengizinkan drop
+            event.preventDefault(); 
             event.dataTransfer.dropEffect = 'move';
-            // Optional: Visual feedback on hover
             if (event.target.closest('.dropzone')) {
                  event.target.closest('.dropzone').classList.add('drag-over');
             }
@@ -365,61 +344,39 @@
              }
         };
 
-
-        /**
-         * Fungsi global untuk menetapkan pustakawan ke shift via DROP.
-         */
         window.handleDrop = (event, targetShift) => {
             event.preventDefault();
-            // Remove drag-over styling
             event.target.closest('.dropzone').classList.remove('drag-over'); 
-
             const librarianId = event.dataTransfer.getData('text/plain');
-            
-            // Panggil fungsi untuk menetapkan (ADD)
             assignLibrarian(librarianId, targetShift);
         };
         
-        /**
-         * Fungsi untuk menghapus pustakawan dari shift (dipicu oleh klik X di item jadwal).
-         */
         window.removeAssignment = (librarianId, shift) => {
-            // Panggil fungsi untuk menghapus (REMOVE)
             removeLibrarian(librarianId, shift);
         }
         
-        /**
-         * Core Logic: Menetapkan pustakawan ke shift (ADD ONLY jika belum ada di shift tersebut).
-         * Mengizinkan pustakawan berada di shift Pagi dan Malam.
-         */
         function assignLibrarian(librarianId, shift) {
             let currentShiftList = currentScheduleTemplate[shift] || [];
-            
             const librarian = allLibrarians.find(l => l.id === librarianId);
             if (!librarian) return;
 
-            // Cari apakah pustakawan sudah ada di shift target
             const indexInCurrent = currentShiftList.findIndex(l => l.librarianId === librarianId);
             
-            // HANYA TAMBAHKAN jika belum ada di shift ini (mencegah duplikasi dalam satu shift)
             if (indexInCurrent === -1) { 
                 if (!currentScheduleTemplate[shift]) currentScheduleTemplate[shift] = []; 
                 
-                // Add the new assignment object
                 currentScheduleTemplate[shift].push({ 
                     librarianId: librarian.id, 
                     name: librarian.name, 
-                    status: 'Belum Absen', 
+                    status: 'Alpha', 
                     checkIn: null,        
-                    absentBy: null        
+                    absentBy: 'System' 
                 });
                 
-                // Clean up and re-sort
                 currentScheduleTemplate[shift].sort((a,b) => a.name.localeCompare(b.name));
                 
-                updateAssignmentPanelUI(); // Update UI
+                updateAssignmentPanelUI(); 
                 
-                // Add message to remind user to save
                 const saveReminderMsg = document.getElementById('save-reminder-msg');
                 if (!saveReminderMsg) {
                     const panel = document.getElementById('schedule-assignment-panel');
@@ -428,21 +385,15 @@
             }
         }
 
-        /**
-         * Core Logic: Menghapus pustakawan dari shift (REMOVE ONLY).
-         */
         function removeLibrarian(librarianId, shift) {
             let currentShiftList = currentScheduleTemplate[shift] || [];
             
-            // Hapus dari shift saat ini
             currentScheduleTemplate[shift] = currentShiftList.filter(l => l.librarianId !== librarianId);
             
-            // Clean up and re-sort
             currentScheduleTemplate[shift].sort((a,b) => a.name.localeCompare(b.name));
 
             updateAssignmentPanelUI();
             
-            // Add message to remind user to save
             const saveReminderMsg = document.getElementById('save-reminder-msg');
             if (!saveReminderMsg) {
                 const panel = document.getElementById('schedule-assignment-panel');
@@ -453,13 +404,9 @@
 
         // --- Recurring Schedule Management Logic (NO CHANGE) ---
 
-        /**
-         * Mengubah tampilan dan memuat template jadwal untuk hari yang dipilih.
-         */
         window.switchDayTab = (dayName) => {
             currentEditingDay = dayName;
             
-            // 1. Update Tab Styles (Div Per Hari)
             document.querySelectorAll('#day-tabs button').forEach(btn => {
                 if (btn.getAttribute('data-day') === dayName) {
                     btn.classList.replace('bg-white', 'bg-purple-600');
@@ -473,22 +420,16 @@
                 }
             });
 
-            // 2. Update Display Text
             const currentDayDisplay = document.getElementById('current-day-display');
             const saveDayDisplay = document.getElementById('schedule-save-day-display');
             if(currentDayDisplay) currentDayDisplay.textContent = dayName;
             if(saveDayDisplay) saveDayDisplay.textContent = dayName;
 
-            // 3. Load the schedule template for the new day
             loadScheduleTemplateForDay(dayName);
         }
 
-        /**
-         * Memuat template jadwal harian dari Firebase.
-         */
         async function loadScheduleTemplateForDay(dayName) {
             setLoading(true);
-            // Hapus pesan peringatan simpan saat hari berganti
             const saveReminderMsg = document.getElementById('save-reminder-msg');
             if (saveReminderMsg) saveReminderMsg.remove(); 
             
@@ -498,40 +439,31 @@
                 const snapshot = await get(ref(dbInstance, schedulePath));
                 currentScheduleTemplate = snapshot.val() || { day: dayName, pagi: [], malam: [] };
                 
-                // Update the UI based on the loaded template
                 updateAssignmentPanelUI();
 
             } catch(e) {
                 console.error("Gagal memuat template jadwal:", e);
                 currentScheduleTemplate = { day: dayName, pagi: [], malam: [] };
-                updateAssignmentPanelUI(); // Fallback to empty UI
+                updateAssignmentPanelUI(); 
             } finally {
                 setLoading(false);
             }
         }
 
-        /**
-         * Memperbarui UI kedua panel (Jadwal dan Daftar Pustakawan).
-         * Semua pustakawan kini ditampilkan di panel kanan.
-         */
         function updateAssignmentPanelUI() {
-            // Semua pustakawan harus selalu tersedia di panel kanan meskipun sudah terjadwal di shift lain/sama.
             const allLibrariansSource = allLibrarians; 
             
-            // Ids yang sudah ditetapkan di hari ini (untuk indikator visual)
             const assignedIds = new Set([
                 ...(currentScheduleTemplate.pagi || []).map(l => l.librarianId),
                 ...(currentScheduleTemplate.malam || []).map(l => l.librarianId)
             ]);
             
-            // 1. Update Librarian List (Source Panel)
             const librarianSourcePanel = document.getElementById('librarian-source-list');
             
             if (librarianSourcePanel) {
                 librarianSourcePanel.innerHTML = allLibrariansSource.length === 0 
                     ? '<p class="text-gray-500 italic p-3">Belum ada pustakawan yang terdaftar.</p>'
                     : allLibrariansSource.map(lib => {
-                        // Check if assigned to any shift for visual indicator
                         const isAssigned = assignedIds.has(lib.id);
                         
                         return `
@@ -546,9 +478,6 @@
                 }).join('');
             }
             
-            // 2. Update Schedule Dropzones (Target Panel)
-            
-            // Render Pagi Shift
             const pagiDropzone = document.getElementById('pagi-dropzone');
             if (pagiDropzone) {
                 const pagiLibrarians = currentScheduleTemplate.pagi || [];
@@ -564,7 +493,6 @@
                     `).join('');
             }
 
-            // Render Malam Shift
             const malamDropzone = document.getElementById('malam-dropzone');
             if (malamDropzone) {
                 const malamLibrarians = currentScheduleTemplate.malam || [];
@@ -582,9 +510,6 @@
         }
         
 
-        /**
-         * Menyimpan template jadwal berulang ke Firebase.
-         */
         window.saveRecurringSchedule = async () => {
             setLoading(true);
             contentArea.querySelectorAll('.p-3.mb-4').forEach(el => el.remove()); 
@@ -596,7 +521,6 @@
             const schedulePath = `recurring_templates/${selectedDay}`;
             
             try {
-                // Template sudah disiapkan di currentScheduleTemplate
                 await set(ref(dbInstance, schedulePath), currentScheduleTemplate);
                 contentArea.insertAdjacentHTML('afterbegin', renderMessage('success', `Template Jadwal Hari ${selectedDay} berhasil diperbarui!`));
             } catch (e) {
@@ -676,24 +600,22 @@
                 </div>
             `;
             
-            // Panggil switchDayTab untuk memuat jadwal hari pertama saat tab dibuka
             switchDayTab(currentEditingDay); 
         }
 
-        // --- Rekap Absensi Logic (MODIFIED) ---
+        // --- Rekap Absensi Logic ---
 
-        /**
-         * Mengubah data ringkasan mingguan menjadi format teks laporan.
-         */
-        function generateReportText(weekRange, summary) {
-            let report = `REKAP ABSENSI PUSTAKAWAN MINGGUAN\n`;
-            report += `Periode: ${weekRange}\n`;
+        // FUNGSI deleteAllRecapData DIHAPUS
+
+        function generateReportText(summary) {
+            let report = `REKAP TOTAL ABSENSI PUSTAKAWAN\n`;
+            report += `Periode: Semua Waktu\n`;
             report += `========================================\n`;
             report += `\n`;
-            report += `Nama Pustakawan\tHadir\tIzin\tAlpha\n`;
+            report += `Nama Pustakawan\tHadir\tIzin\tAlpha\tBelum Absen (Shift)\n`;
             
             summary.forEach(lib => {
-                report += `${lib.name}\t${lib.Hadir}\t${lib.Izin}\t${lib.Alpha}\n`;
+                report += `${lib.name}\t${lib.Hadir}\t${lib.Izin}\t${lib.Alpha}\t${lib['Belum Absen'] || 0}\n`;
             });
             
             report += `\n(Laporan ini dibuat otomatis)`;
@@ -701,18 +623,13 @@
             return report;
         }
 
-        /**
-         * Fungsi global untuk menyalin laporan mingguan ke clipboard.
-         */
-        window.copyWeeklyReport = async (reportTextEncoded) => {
+        window.copyTotalReport = async (reportTextEncoded) => {
             const reportText = decodeURIComponent(reportTextEncoded);
             try {
-                // Check if clipboard API is available
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     await navigator.clipboard.writeText(reportText);
                     alert('Laporan berhasil disalin ke clipboard!');
                 } else {
-                    // Fallback for older browsers (less reliable)
                     const tempTextArea = document.createElement('textarea');
                     tempTextArea.value = reportText;
                     document.body.appendChild(tempTextArea);
@@ -727,130 +644,112 @@
             }
         };
         
-        /**
-         * Mengelompokkan semua catatan absensi harian ke dalam ringkasan per minggu.
-         */
-        function groupRecordsByWeek(records) {
-            const weeklyData = {}; // Key: Sunday Date (YYYY-MM-DD), Value: { summary: { librarianId: { name, Hadir, Izin, Alpha } } }
+        function calculateTotalRecap(records) {
+            const totalSummary = {}; 
+            
+            allLibrarians.forEach(lib => {
+                totalSummary[lib.id] = { 
+                    name: lib.name, 
+                    Hadir: 0, 
+                    Izin: 0, 
+                    Alpha: 0,
+                    'Belum Absen': 0 
+                };
+            });
+
 
             records.forEach(record => {
-                const dateKey = record.dayKey; 
-                if (!dateKey) return; 
-
-                // 1. Tentukan kunci minggu (tanggal hari Ahad)
-                const weekKey = getSundayOfWeek(dateKey); 
-
-                // 2. Inisialisasi data minggu tersebut jika belum ada
-                if (!weeklyData[weekKey]) {
-                    weeklyData[weekKey] = {
-                        summary: {} // Ringkasan untuk minggu ini
-                    };
-                }
-
-                // 3. Agregasi absensi untuk minggu tersebut
                 const allLibrariansInRecord = [...(record.pagi || []), ...(record.malam || [])];
                 
                 allLibrariansInRecord.forEach(lib => {
                     const id = lib.librarianId;
-                    const status = lib.status; // Bisa 'Hadir', 'Izin', 'Alpha', 'Belum Absen'
-
-                    // Hanya agregasi status yang relevan (Hadir, Izin, Alpha)
-                    if (status !== 'Belum Absen') {
-                        if (!weeklyData[weekKey].summary[id]) {
-                            const globalLib = allLibrarians.find(l => l.id === id);
-                            weeklyData[weekKey].summary[id] = { 
-                                name: globalLib ? globalLib.name : lib.name, 
-                                Hadir: 0, 
-                                Izin: 0, 
-                                Alpha: 0 
-                            };
+                    // PERBAIKAN: Status yang tidak diisi (null) dihitung sebagai 'Belum Absen'
+                    // Jika status sudah 'Hadir', 'Izin', atau 'Alpha', biarkan.
+                    // Jika null, itu artinya Belum Absen.
+                    const status = lib.status || 'Belum Absen'; 
+                    
+                    if (totalSummary[id]) {
+                        if (totalSummary[id].hasOwnProperty(status)) {
+                            totalSummary[id][status]++;
                         }
-
-                        if (weeklyData[weekKey].summary[id].hasOwnProperty(status)) {
-                            weeklyData[weekKey].summary[id][status]++;
+                    } else if (lib.name) { 
+                         // Kasus jika ada data absensi untuk pustakawan yang sudah dihapus/tidak ada di allLibrarians
+                         if (!totalSummary[id]) {
+                            totalSummary[id] = { name: lib.name, Hadir: 0, Izin: 0, Alpha: 0, 'Belum Absen': 0 };
+                        }
+                        if (totalSummary[id].hasOwnProperty(status)) {
+                            totalSummary[id][status]++;
                         }
                     }
                 });
             });
             
-            // Konversi ringkasan objek menjadi array yang diurutkan untuk rendering akhir
-            const sortedWeeksKeys = Object.keys(weeklyData).sort().reverse(); // Urutkan minggu terbaru di atas
-
-            const finalData = sortedWeeksKeys.map(weekKey => ({
-                weekStart: weekKey,
-                weekRange: formatWeekRange(weekKey), // Rentang Ahad - Sabtu
-                summary: Object.values(weeklyData[weekKey].summary).sort((a, b) => a.name.localeCompare(b.name))
-            }));
-            
-            return finalData;
+            // Urutkan dan pastikan semua data yang dihitung tetap muncul
+            const finalSummary = Object.values(totalSummary).sort((a, b) => a.name.localeCompare(b.name));
+            return finalSummary.filter(lib => lib.Hadir > 0 || lib.Izin > 0 || lib.Alpha > 0 || lib['Belum Absen'] > 0);
         }
 
 
-        /**
-         * Merender tampilan rekap absensi per minggu.
-         */
-        function renderWeeklyRecap(weeklyData) {
+        function renderTotalRecap(totalSummary, startDate) {
             const contentArea = document.getElementById('tab-content');
             
-            contentArea.innerHTML = `
-                <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2">Rekap Absensi Mingguan</h2>
-                
-                ${weeklyData.length === 0 ? `
-                    <div class="text-center py-12 text-gray-500">
-                        <p class="text-lg">Belum ada data absensi yang tercatat untuk dikelompokkan per minggu.</p>
-                        <p class="text-sm">Silakan cek absensi harian dan pastikan pustakawan sudah ditetapkan jadwalnya.</p>
-                    </div>
-                ` : weeklyData.map(week => {
-                    
-                    // 1. Generate the report text for copying and encode it
-                    const reportText = generateReportText(week.weekRange, week.summary);
-                    const encodedReportText = encodeURIComponent(reportText);
+            const reportText = generateReportText(totalSummary);
+            const encodedReportText = encodeURIComponent(reportText);
 
-                    // 2. Return the HTML for the weekly box
-                    return `
-                    <div class="mb-8 p-6 bg-white rounded-xl shadow-2xl border border-gray-100">
-                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 border-b pb-2">
-                            <h3 class="text-xl font-bold text-gray-700 mb-2 sm:mb-0">Rekap Absensi Minggu: ${week.weekRange}</h3>
-                            <button onclick="copyWeeklyReport('${encodedReportText}')"
-                                class="flex items-center justify-center sm:justify-start space-x-1 px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition shadow-md">
+            contentArea.innerHTML = `
+                <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2">Rekap Total Absensi Pustakawan</h2>
+                
+                <div class="mb-8 p-6 bg-white rounded-xl shadow-2xl border border-gray-100">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 border-b pb-2">
+                        <h3 class="text-xl font-bold text-gray-700 mb-2 sm:mb-0">Total Keseluruhan (Semua Waktu)</h3>
+                        <div class="flex space-x-2 flex-wrap justify-end gap-2">
+                            <button onclick="copyTotalReport('${encodedReportText}')"
+                                class="flex items-center justify-center space-x-1 px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition shadow-md">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v2a2 2 0 01-2 2h-1M12 7v10m-3-3h6" />
                                 </svg>
                                 <span>Salin Laporan</span>
                             </button>
-                        </div>
-                        
-                        <div class="overflow-x-auto rounded-lg border border-gray-200">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Pustakawan</th>
-                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Hadir</th>
-                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Izin</th>
-                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Alpha</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    ${week.summary.map(lib => `
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${lib.name}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-bold ${lib.Hadir > 0 ? 'text-green-600' : 'text-gray-400'}">${lib.Hadir}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-bold ${lib.Izin > 0 ? 'text-yellow-600' : 'text-gray-400'}">${lib.Izin}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-bold ${lib.Alpha > 0 ? 'text-red-600' : 'text-gray-400'}">${lib.Alpha}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
+                            </div>
                     </div>
-                    `;
-                }).join('')}
+                    
+                    <div class="mb-4 text-sm text-gray-500">
+                        Data Absensi dimulai pada tanggal: <span class="font-semibold text-gray-700">${startDate}</span>
+                    </div>
+                    
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Pustakawan</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Hadir</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Izin</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Alpha</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Belum Absen (Shift)</th> 
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${totalSummary.map(lib => `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${lib.name}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-bold ${lib.Hadir > 0 ? 'text-green-600' : 'text-gray-400'}">${lib.Hadir}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-bold ${lib.Izin > 0 ? 'text-yellow-600' : 'text-gray-400'}">${lib.Izin}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-bold ${lib.Alpha > 0 ? 'text-red-600' : 'text-gray-400'}">${lib.Alpha}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-bold ${lib['Belum Absen'] > 0 ? 'text-gray-600' : 'text-gray-400'}">${lib['Belum Absen']}</td> 
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             `;
         }
 
         async function loadRekapView() {
             setLoading(true);
             contentArea.innerHTML = ''; 
+
+            let startDate = 'Data Belum Tersedia'; 
 
             try {
                 const schedulesRef = ref(dbInstance, 'librarian_schedules');
@@ -859,15 +758,22 @@
                 const records = [];
                 if (snapshot.exists()) {
                     const schedulesObject = snapshot.val();
+                    const dateKeys = Object.keys(schedulesObject).sort(); 
+                    
+                    if (dateKeys.length > 0) {
+                        const firstDateKey = dateKeys[0];
+                        const [year, month, day] = firstDateKey.split('-').map(Number);
+                        const firstDate = new Date(year, month - 1, day); 
+                        startDate = firstDate.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+                    }
+
                     for (const dateKey in schedulesObject) { 
-                        // Inject the dateKey (YYYY-MM-DD) into the record for weekly grouping
-                        records.push({ dayKey: dateKey, ...schedulesObject[dateKey] }); 
+                        records.push(schedulesObject[dateKey]); 
                     }
                 }
                 
-                // Group and calculate summary by week
-                const weeklySummary = groupRecordsByWeek(records);
-                renderWeeklyRecap(weeklySummary);
+                const totalSummary = calculateTotalRecap(records);
+                renderTotalRecap(totalSummary, startDate); 
 
             } catch (e) {
                 console.error("Gagal memuat catatan rekapitulasi:", e);
@@ -914,11 +820,9 @@
                         allLibrarians.push({ key: key, ...libsObj[key] });
                     }
                 }
-                // Jika sedang di tab yang membutuhkan daftar pustakawan, muat ulang
                 if (currentTab === 'librarian') {
                     renderLibrarianManagement();
                 } else if (currentTab === 'schedule') {
-                    // Panggil updateAssignmentPanelUI untuk memperbarui daftar pustakawan di panel kanan.
                     updateAssignmentPanelUI(); 
                 }
             }, (error) => {
