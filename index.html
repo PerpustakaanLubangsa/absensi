@@ -1,330 +1,613 @@
 <!DOCTYPE html>
+
 <html lang="id">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Absensi Pustakawan | Terminal Absen</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f7f9fc;
-    }
-    .card {
-      background-color: white;
-      border-radius: 16px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
-                  0 10px 15px -3px rgba(0, 0, 0, 0.05);
-      transition: opacity 0.3s ease;
-    }
-    #real-time-clock {
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
-      letter-spacing: -1px;
-    }
-    .status-button {
-      font-weight: 600;
-      transition: opacity 0.15s ease, background-color 0.1s;
-    }
-    .status-hadir { background-color: #10b981; border-color: #059669; }
-    .status-izin { background-color: #f59e0b; border-color: #d97706; }
-    .status-alpha { background-color: #ef4444; border-color: #dc2626; }
-    .status-belumabsen { background-color: #9ca3af; border-color: #6b7280; }
-    
-    /* --- STYLE BARU: Floating Button Container --- */
-    /* Container agar tombol bisa diatur dalam layout vertikal */
-    #floating-buttons-container {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        display: flex;
-        flex-direction: column; /* Mengatur tombol dari atas ke bawah */
-        gap: 12px; /* Jarak vertikal antar tombol */
-        z-index: 100;
-    }
-    
-    .floating-button {
-      width: 56px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
-      transition: background-color 0.3s, transform 0.1s;
-      /* Hapus posisi fixed/absolute dari sini */
-    }
-    
-    /* Button Admin (Biru Cyan) */
-    .admin-button {
-      background-color: #06b6d4;
-      color: white;
-      box-shadow: 0 6px 10px rgba(6, 182, 212, 0.4);
-    }
-    .admin-button:hover {
-      background-color: #0891b2;
-      transform: scale(1.05);
-    }
-    
-    /* Button Pinjam Ganda (Kuning Emas) */
-    .pinjam-button {
-      background-color: #facc15;
-      color: #3f3f46; 
-      box-shadow: 0 6px 10px rgba(250, 204, 21, 0.4);
-    }
-    .pinjam-button:hover {
-      background-color: #eab308;
-      transform: scale(1.05);
-    }
-    /* ---------------------------------- */
 
-    .librarian-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 24px;
-    }
-    .shift-header { margin-bottom: 24px; }
-    .pagi-accent { border-color: #06b6d4; }
-    .text-pagi-accent { color: #075985; }
-    .malam-accent { border-color: #38bdf8; }
-    .text-malam-accent { color: #0284c7; }
-  </style>
+<meta charset="UTF-8" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>Absensi Pustakawan | Terminal Absen</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+body {
+
+font-family: 'Inter', sans-serif;
+
+background-color: #f7f9fc;
+
+}
+
+.card {
+
+background-color: white;
+
+border-radius: 16px;
+
+box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+
+0 10px 15px -3px rgba(0, 0, 0, 0.05);
+
+transition: opacity 0.3s ease;
+
+}
+
+#real-time-clock {
+
+text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
+
+letter-spacing: -1px;
+
+}
+
+.status-button {
+
+font-weight: 600;
+
+transition: opacity 0.15s ease, background-color 0.1s;
+
+}
+
+.status-hadir { background-color: #10b981; border-color: #059669; }
+
+.status-izin { background-color: #f59e0b; border-color: #d97706; }
+
+.status-alpha { background-color: #ef4444; border-color: #dc2626; }
+
+.status-belumabsen { background-color: #9ca3af; border-color: #6b7280; }
+
+
+/* --- STYLE BARU: Floating Button Container --- */
+
+/* Container agar tombol bisa diatur dalam layout vertikal */
+
+#floating-buttons-container {
+
+position: fixed;
+
+bottom: 20px;
+
+right: 20px;
+
+display: flex;
+
+flex-direction: column; /* Mengatur tombol dari atas ke bawah */
+
+gap: 12px; /* Jarak vertikal antar tombol */
+
+z-index: 100;
+
+}
+
+
+.floating-button {
+
+width: 56px;
+
+height: 56px;
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+border-radius: 50%;
+
+box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+
+transition: background-color 0.3s, transform 0.1s;
+
+/* Hapus posisi fixed/absolute dari sini */
+
+}
+
+
+/* Button Admin (Biru Cyan) */
+
+.admin-button {
+
+background-color: #06b6d4;
+
+color: white;
+
+box-shadow: 0 6px 10px rgba(6, 182, 212, 0.4);
+
+}
+
+.admin-button:hover {
+
+background-color: #0891b2;
+
+transform: scale(1.05);
+
+}
+
+
+/* Button Pinjam Ganda (Kuning Emas) */
+
+.pinjam-button {
+
+background-color: #facc15;
+
+color: #3f3f46;
+
+box-shadow: 0 6px 10px rgba(250, 204, 21, 0.4);
+
+}
+
+.pinjam-button:hover {
+
+background-color: #eab308;
+
+transform: scale(1.05);
+
+}
+
+/* ---------------------------------- */
+
+
+
+.librarian-grid {
+
+display: grid;
+
+grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+
+gap: 24px;
+
+}
+
+.shift-header { margin-bottom: 24px; }
+
+.pagi-accent { border-color: #06b6d4; }
+
+.text-pagi-accent { color: #075985; }
+
+.malam-accent { border-color: #38bdf8; }
+
+.text-malam-accent { color: #0284c7; }
+
+</style>
+
 </head>
+
 <body>
-  <div id="app-container" class="min-h-screen flex flex-col items-center justify-center p-4 relative">
-    <header class="w-full max-w-6xl mb-8 text-center">
-      <h1 id="real-time-clock" class="text-6xl md:text-7xl font-extrabold text-gray-800 mb-0">00:00:00</h1>
-      <p id="today-display" class="text-xl font-semibold text-gray-500 mt-1">Loading...</p>
-    </header>
 
-    <main class="w-full max-w-6xl">
-      <div id="attendance-display" class="space-y-10"></div>
-    </main>
-    
-    <div id="floating-buttons-container">
-        <button id="openPinjamGandaBtn" class="floating-button pinjam-button" title="Buka Sistem Peminjaman Ganda">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor"
-               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20v2.5a2.5 2.5 0 0 1-2.5 2.5H6.5A2.5 2.5 0 0 1 4 19.5z"/>
-               <path d="M12 11V7a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"/>
-               <path d="M12 11V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v4"/>
-               <line x1="8" y1="17" x2="8" y2="11"></line>
-               <line x1="16" y1="17" x2="16" y2="11"></line>
-          </svg>
-        </button>
-        
-        <a href="admin.html" class="floating-button admin-button" title="Pergi ke Halaman Admin">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor"
-               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
-        </a>
-    </div>
-  </div>
+<div id="app-container" class="min-h-screen flex flex-col items-center justify-center p-4 relative">
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getDatabase, ref, get, set, update, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+<header class="w-full max-w-6xl mb-8 text-center">
 
-    // === FIREBASE CONFIG ===
-    const app = initializeApp({
-      apiKey: "AIzaSyBb-hbcc_ZE2hH6dlc81HbIGMQi96y4qYI",
-      authDomain: "absensi-7ef83.firebaseapp.com",
-      databaseURL: "https://absensi-7ef83-default-rtdb.firebaseio.com",
-      projectId: "absensi-7ef83",
-      storageBucket: "absensi-7ef83.firebasestorage.app",
-      messagingSenderId: "661765044421",
-      appId: "1:661765044421:web:b8578a195a6d208dc4d8ac"
-    });
-    const db = getDatabase(app);
+<h1 id="real-time-clock" class="text-6xl md:text-7xl font-extrabold text-gray-800 mb-0">00:00:00</h1>
 
-    // === KONSTANTA ===
-    const DAYS = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const SHIFT = {
-      pagi: { name: 'Pagi', range: '08:00 - 11:00', start: 480, end: 660 },
-      malam: { name: 'Malam', range: '21:00 - 22:30', start: 1260, end: 1350 }
-    };
+<p id="today-display" class="text-xl font-semibold text-gray-500 mt-1">Loading...</p>
 
-    const todayDisplay = document.getElementById('today-display');
-    const attendanceDisplay = document.getElementById('attendance-display');
-    const realTimeClock = document.getElementById('real-time-clock');
-    // BARU: Elemen tombol Pinjam Ganda
-    const openPinjamGandaBtn = document.getElementById('openPinjamGandaBtn');
-
-    const getTodayInfo = () => {
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      return {
-        key: `${y}-${m}-${d}`,
-        name: DAYS[now.getDay()],
-        formatted: now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-      };
-    };
-
-    const updateClock = () => {
-      const now = new Date();
-      realTimeClock.textContent = now.toLocaleTimeString('id-ID', { hour12: false });
-      if (now.getSeconds() === 0 || todayDisplay.textContent === 'Loading...')
-        todayDisplay.textContent = getTodayInfo().formatted;
-    };
-
-    const getActiveShift = () => {
-      const now = new Date();
-      const totalMin = now.getHours() * 60 + now.getMinutes();
-      return Object.entries(SHIFT)
-        .filter(([_, s]) => totalMin >= s.start && totalMin < s.end)
-        .map(([k, s]) => ({ key: k, ...s }));
-    };
-
-    const btnClass = (status, cur) => {
-      const base = "status-button px-4 py-2 text-white rounded-full text-sm flex-1 mx-1 border-b-4";
-      const map = { Hadir: 'status-hadir', Izin: 'status-izin', Alpha: 'status-alpha', 'Belum Absen': 'status-belumabsen' };
-      return status === cur ? `${base} ${map[status]} ring-2 ring-gray-300` : `${base} bg-gray-200 text-gray-700 opacity-50 hover:opacity-100 border-gray-300`;
-    };
-
-    const renderCard = (lib, shiftKey) => {
-      const time = lib.checkIn ? new Date(lib.checkIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '---';
-      const status = ['Hadir', 'Izin', 'Alpha'].includes(lib.status) ? lib.status : 'Belum Absen';
-      const id = `card-${shiftKey}-${lib.index}`;
-      return `
-        <div id="${id}" data-shift="${shiftKey}" data-index="${lib.index}" class="card p-6 flex flex-col items-center text-center">
-          <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-3 shadow-inner border-2 border-white/50">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-          </div>
-          <h4 class="text-xl font-bold text-gray-800">${lib.name}</h4>
-          <p class="text-sm text-gray-500 mb-4">Check-in: <span class="font-semibold" id="checkin-${shiftKey}-${lib.index}">${time}</span></p>
-          <div class="w-full flex justify-between space-x-2 border-t pt-4 border-gray-100">
-            ${['Hadir','Izin','Alpha'].map(s=>`<button data-status="${s}" class="${btnClass(s,status)}">${s}</button>`).join('')}
-          </div>
-        </div>`;
-    };
-
-    const renderAttendance = (schedule) => {
-      attendanceDisplay.innerHTML = '';
-      const shifts = getActiveShift();
-      if (!shifts.length) {
-        attendanceDisplay.innerHTML = `
-          <div class="text-center py-12 card bg-gray-50 border-t-4 border-indigo-400">
-            <h3 class="text-2xl font-bold text-gray-700 mb-2">Pintu Absensi Ditutup</h3>
-            <p class="text-gray-500">Hanya aktif saat jam piket: Pagi 08:00–11:00, Malam 21:00–22:30</p>
-          </div>`;
-        return;
-      }
-      const frag = document.createDocumentFragment();
-      shifts.forEach(s => {
-        const list = schedule?.[s.key] || [];
-        if (!list.length) return;
-        const div = document.createElement('div');
-        div.className = `p-8 card border-t-8 ${s.key === 'pagi' ? 'pagi-accent' : 'malam-accent'}`;
-        div.innerHTML = `
-          <div class="shift-header">
-            <h3 class="text-3xl font-bold ${s.key === 'pagi' ? 'text-pagi-accent' : 'text-malam-accent'} mb-1">Shift ${s.name}</h3>
-            <p class="text-base text-gray-600">Jam Piket: ${s.range}</p>
-          </div>
-          <div class="librarian-grid">${list.map((lib,i)=>renderCard({...lib,index:i},s.key)).join('')}</div>`;
-        frag.appendChild(div);
-      });
-      attendanceDisplay.appendChild(frag);
-    };
-
-    const startListener = async () => {
-      const today = getTodayInfo();
-      const dailyRef = ref(db, `librarian_schedules/${today.key}`);
-      try {
-        let schedule = (await get(dailyRef)).val();
-        if (!schedule) {
-          const template = (await get(ref(db, `recurring_templates/${today.name}`))).val();
-          if (template) {
-            
-            // LOGIKA BARU UNTUK SET STATUS AWAL MENJADI 'Alpha'
-            const initialStatus = 'Alpha';
-            
-            // Fungsi untuk mengaplikasikan status awal pada setiap pustakawan di shift
-            const applyInitialStatus = (shiftList) => {
-                if (!Array.isArray(shiftList)) return [];
-                return shiftList.map(lib => ({
-                    ...lib,
-                    status: initialStatus,
-                    checkIn: null,        
-                    absentBy: initialStatus === 'Alpha' ? 'System' : null
-                }));
-            };
-            
-            // Membuat struktur schedule hari ini dari template dan menerapkan status awal
-            schedule = { 
-                pagi: applyInitialStatus(template.pagi || []), 
-                malam: applyInitialStatus(template.malam || []) 
-            };
-            
-            await set(dailyRef, schedule);
-          }
-        }
-        onValue(dailyRef, snap => renderAttendance(snap.val()));
-      } catch (e) {
-        console.error(e);
-        attendanceDisplay.innerHTML = `<div class="text-center py-12 card bg-red-100 border-t-4 border-red-500 text-red-700">
-          <h3 class="text-xl font-bold mb-2">Gagal Memuat Data</h3>
-          <p>Cek koneksi internet Anda.</p></div>`;
-      }
-    };
-
-    // === HANDLER BUTTON (Delegasi Event) ===
-    attendanceDisplay.addEventListener('click', async (e) => {
-      const btn = e.target.closest('button[data-status]');
-      if (!btn) return;
-      const card = btn.closest('[data-shift]');
-      const shift = card.dataset.shift;
-      const index = card.dataset.index;
-      const status = btn.dataset.status;
-      const todayKey = getTodayInfo().key;
-      const path = `librarian_schedules/${todayKey}/${shift}/${index}`;
-
-      const active = card.querySelector('.ring-2');
-      const current = active ? active.textContent.trim() : 'Belum Absen';
-      let finalStatus = (status === 'Hadir' && current === 'Hadir') ? 'Belum Absen' : status;
-      if (status !== 'Hadir' && current === status) return;
-
-      const now = new Date();
-      const updateData = {
-        status: finalStatus,
-        checkIn: finalStatus === 'Hadir' ? now.toISOString() : null,
-        absentBy: finalStatus !== 'Belum Absen' && finalStatus !== 'Hadir' ? 'SharedTerminal' : null
-      };
-
-      card.querySelectorAll('button').forEach(b => b.className = btnClass(b.textContent.trim(), finalStatus));
-      const timeEl = card.querySelector(`#checkin-${shift}-${index}`);
-      if (timeEl) timeEl.textContent = finalStatus === 'Hadir' ? now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '---';
-      try { await update(ref(db, path), updateData); }
-      catch (err) { console.error(err); alert('Gagal menyimpan status'); }
-    });
-
-    // ------------------------------------------------------------------
-    // Logika Komunikasi dengan Halaman Induk (postMessage)
-    // ------------------------------------------------------------------
-    if (openPinjamGandaBtn) {
-        openPinjamGandaBtn.addEventListener('click', function() {
-            if (window.parent !== window) {
-                window.parent.postMessage({
-                    action: 'openPinjamGanda'
-                }, '*'); 
-            }
-        });
-    }
-    // ------------------------------------------------------------------
+</header>
 
 
-    // === INISIALISASI ===
-    window.onload = () => {
-      updateClock();
-      setInterval(updateClock, 1000);
-      startListener();
-    };
-  </script>
+
+<main class="w-full max-w-6xl">
+
+<div id="attendance-display" class="space-y-10"></div>
+
+</main>
+
+
+<div id="floating-buttons-container">
+
+<button id="openPinjamGandaBtn" class="floating-button pinjam-button" title="Buka Sistem Peminjaman Ganda">
+
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor"
+
+stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+
+<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20v2.5a2.5 2.5 0 0 1-2.5 2.5H6.5A2.5 2.5 0 0 1 4 19.5z"/>
+
+<path d="M12 11V7a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"/>
+
+<path d="M12 11V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v4"/>
+
+<line x1="8" y1="17" x2="8" y2="11"></line>
+
+<line x1="16" y1="17" x2="16" y2="11"></line>
+
+</svg>
+
+</button>
+
+
+<a href="admin.html" class="floating-button admin-button" title="Pergi ke Halaman Admin">
+
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor"
+
+stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+
+<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+
+<path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+
+</svg>
+
+</a>
+
+</div>
+
+</div>
+
+
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+
+import { getDatabase, ref, get, set, update, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+
+
+// === FIREBASE CONFIG ===
+
+const app = initializeApp({
+
+apiKey: "AIzaSyBb-hbcc_ZE2hH6dlc81HbIGMQi96y4qYI",
+
+authDomain: "absensi-7ef83.firebaseapp.com",
+
+databaseURL: "https://absensi-7ef83-default-rtdb.firebaseio.com",
+
+projectId: "absensi-7ef83",
+
+storageBucket: "absensi-7ef83.firebasestorage.app",
+
+messagingSenderId: "661765044421",
+
+appId: "1:661765044421:web:b8578a195a6d208dc4d8ac"
+
+});
+
+const db = getDatabase(app);
+
+
+
+// === KONSTANTA ===
+
+const DAYS = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+const SHIFT = {
+
+pagi: { name: 'Pagi', range: '08:00 - 11:00', start: 480, end: 660 },
+
+malam: { name: 'Malam', range: '21:00 - 22:30', start: 1260, end: 1350 }
+
+};
+
+
+
+const todayDisplay = document.getElementById('today-display');
+
+const attendanceDisplay = document.getElementById('attendance-display');
+
+const realTimeClock = document.getElementById('real-time-clock');
+
+// BARU: Elemen tombol Pinjam Ganda
+
+const openPinjamGandaBtn = document.getElementById('openPinjamGandaBtn');
+
+
+
+const getTodayInfo = () => {
+
+const now = new Date();
+
+const y = now.getFullYear();
+
+const m = String(now.getMonth() + 1).padStart(2, '0');
+
+const d = String(now.getDate()).padStart(2, '0');
+
+return {
+
+key: `${y}-${m}-${d}`,
+
+name: DAYS[now.getDay()],
+
+formatted: now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+
+};
+
+};
+
+
+
+const updateClock = () => {
+
+const now = new Date();
+
+realTimeClock.textContent = now.toLocaleTimeString('id-ID', { hour12: false });
+
+if (now.getSeconds() === 0 || todayDisplay.textContent === 'Loading...')
+
+todayDisplay.textContent = getTodayInfo().formatted;
+
+};
+
+
+
+const getActiveShift = () => {
+
+const now = new Date();
+
+const totalMin = now.getHours() * 60 + now.getMinutes();
+
+return Object.entries(SHIFT)
+
+.filter(([_, s]) => totalMin >= s.start && totalMin < s.end)
+
+.map(([k, s]) => ({ key: k, ...s }));
+
+};
+
+
+
+const btnClass = (status, cur) => {
+
+const base = "status-button px-4 py-2 text-white rounded-full text-sm flex-1 mx-1 border-b-4";
+
+const map = { Hadir: 'status-hadir', Izin: 'status-izin', Alpha: 'status-alpha', 'Belum Absen': 'status-belumabsen' };
+
+return status === cur ? `${base} ${map[status]} ring-2 ring-gray-300` : `${base} bg-gray-200 text-gray-700 opacity-50 hover:opacity-100 border-gray-300`;
+
+};
+
+
+
+const renderCard = (lib, shiftKey) => {
+
+const time = lib.checkIn ? new Date(lib.checkIn).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '---';
+
+const status = ['Hadir', 'Izin', 'Alpha'].includes(lib.status) ? lib.status : 'Belum Absen';
+
+const id = `card-${shiftKey}-${lib.index}`;
+
+return `
+
+<div id="${id}" data-shift="${shiftKey}" data-index="${lib.index}" class="card p-6 flex flex-col items-center text-center">
+
+<div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-3 shadow-inner border-2 border-white/50">
+
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+
+<circle cx="12" cy="7" r="4"></circle>
+
+</svg>
+
+</div>
+
+<h4 class="text-xl font-bold text-gray-800">${lib.name}</h4>
+
+<p class="text-sm text-gray-500 mb-4">Check-in: <span class="font-semibold" id="checkin-${shiftKey}-${lib.index}">${time}</span></p>
+
+<div class="w-full flex justify-between space-x-2 border-t pt-4 border-gray-100">
+
+${['Hadir','Izin','Alpha'].map(s=>`<button data-status="${s}" class="${btnClass(s,status)}">${s}</button>`).join('')}
+
+</div>
+
+</div>`;
+
+};
+
+
+
+const renderAttendance = (schedule) => {
+
+attendanceDisplay.innerHTML = '';
+
+const shifts = getActiveShift();
+
+if (!shifts.length) {
+
+attendanceDisplay.innerHTML = `
+
+<div class="text-center py-12 card bg-gray-50 border-t-4 border-indigo-400">
+
+<h3 class="text-2xl font-bold text-gray-700 mb-2">Pintu Absensi Ditutup</h3>
+
+<p class="text-gray-500">Hanya aktif saat jam piket: Pagi 08:00–11:00, Malam 21:00–22:30</p>
+
+</div>`;
+
+return;
+
+}
+
+const frag = document.createDocumentFragment();
+
+shifts.forEach(s => {
+
+const list = schedule?.[s.key] || [];
+
+if (!list.length) return;
+
+const div = document.createElement('div');
+
+div.className = `p-8 card border-t-8 ${s.key === 'pagi' ? 'pagi-accent' : 'malam-accent'}`;
+
+div.innerHTML = `
+
+<div class="shift-header">
+
+<h3 class="text-3xl font-bold ${s.key === 'pagi' ? 'text-pagi-accent' : 'text-malam-accent'} mb-1">Shift ${s.name}</h3>
+
+<p class="text-base text-gray-600">Jam Piket: ${s.range}</p>
+
+</div>
+
+<div class="librarian-grid">${list.map((lib,i)=>renderCard({...lib,index:i},s.key)).join('')}</div>`;
+
+frag.appendChild(div);
+
+});
+
+attendanceDisplay.appendChild(frag);
+
+};
+
+
+
+const startListener = async () => {
+
+const today = getTodayInfo();
+
+const dailyRef = ref(db, `librarian_schedules/${today.key}`);
+
+try {
+
+let schedule = (await get(dailyRef)).val();
+
+if (!schedule) {
+
+const template = (await get(ref(db, `recurring_templates/${today.name}`))).val();
+
+if (template) {
+
+schedule = { pagi: template.pagi || [], malam: template.malam || [] };
+
+await set(dailyRef, schedule);
+
+}
+
+}
+
+onValue(dailyRef, snap => renderAttendance(snap.val()));
+
+} catch (e) {
+
+console.error(e);
+
+attendanceDisplay.innerHTML = `<div class="text-center py-12 card bg-red-100 border-t-4 border-red-500 text-red-700">
+
+<h3 class="text-xl font-bold mb-2">Gagal Memuat Data</h3>
+
+<p>Cek koneksi internet Anda.</p></div>`;
+
+}
+
+};
+
+
+
+// === HANDLER BUTTON (Delegasi Event) ===
+
+attendanceDisplay.addEventListener('click', async (e) => {
+
+const btn = e.target.closest('button[data-status]');
+
+if (!btn) return;
+
+const card = btn.closest('[data-shift]');
+
+const shift = card.dataset.shift;
+
+const index = card.dataset.index;
+
+const status = btn.dataset.status;
+
+const todayKey = getTodayInfo().key;
+
+const path = `librarian_schedules/${todayKey}/${shift}/${index}`;
+
+
+
+const active = card.querySelector('.ring-2');
+
+const current = active ? active.textContent.trim() : 'Belum Absen';
+
+let finalStatus = (status === 'Hadir' && current === 'Hadir') ? 'Belum Absen' : status;
+
+if (status !== 'Hadir' && current === status) return;
+
+
+
+const now = new Date();
+
+const updateData = {
+
+status: finalStatus,
+
+checkIn: finalStatus === 'Hadir' ? now.toISOString() : null,
+
+absentBy: finalStatus !== 'Belum Absen' && finalStatus !== 'Hadir' ? 'SharedTerminal' : null
+
+};
+
+
+
+card.querySelectorAll('button').forEach(b => b.className = btnClass(b.textContent.trim(), finalStatus));
+
+const timeEl = card.querySelector(`#checkin-${shift}-${index}`);
+
+if (timeEl) timeEl.textContent = finalStatus === 'Hadir' ? now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '---';
+
+try { await update(ref(db, path), updateData); }
+
+catch (err) { console.error(err); alert('Gagal menyimpan status'); }
+
+});
+
+
+
+// ------------------------------------------------------------------
+
+// Logika Komunikasi dengan Halaman Induk (postMessage)
+
+// ------------------------------------------------------------------
+
+if (openPinjamGandaBtn) {
+
+openPinjamGandaBtn.addEventListener('click', function() {
+
+if (window.parent !== window) {
+
+window.parent.postMessage({
+
+action: 'openPinjamGanda'
+
+}, '*');
+
+}
+
+});
+
+}
+
+// ------------------------------------------------------------------
+
+
+
+
+
+// === INISIALISASI ===
+
+window.onload = () => {
+
+updateClock();
+
+setInterval(updateClock, 1000);
+
+startListener();
+
+};
+
+</script>
+
 </body>
+
 </html>
