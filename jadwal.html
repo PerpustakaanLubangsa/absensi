@@ -3,242 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jadwal Piket Pustakawan</title>
+    <title>Absensi Pustakawan | Manajemen Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Mengimpor Font Inter untuk tampilan modern */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        
-        /* Pengaturan Body dan Layout Utama */
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: auto; 
+        body { font-family: 'Inter', sans-serif; background-color: #f4f7f9; }
+        .container-card { max-width: 90%; margin: 0 auto; }
+        /* Style kustom untuk badge status */
+        .status-hadir { background-color: #10b981; color: white; }
+        .status-izin { background-color: #fbbf24; color: #78350f; }
+        .status-alpha { background-color: #ef4444; color: white; }
+        .status-belum-absen { background-color: #9ca3af; color: white; }
+        /* Style untuk tab aktif */
+        .tab-active { background-color: #ffffff; color: #1f2937; border-bottom: 3px solid #3b82f6; }
+        .tab-inactive { background-color: #f9fafb; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+        /* Style untuk item drag and drop */
+        .draggable-librarian { 
+            cursor: grab; 
+            border-left: 5px solid #3b82f6; 
         }
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f7f9fb; /* Latar belakang abu-abu sangat lembut */
-            display: flex;
-            justify-content: center;
-            align-items: flex-start; 
-            padding: 3rem 0; 
+        .draggable-librarian:active {
+            cursor: grabbing;
         }
-        
-        /* Style untuk container utama (Kartu Sudut Lembut & Bayangan Halus) */
-        .container-card {
-            background-color: white;
-            border-radius: 5px; /* Lebih lembut */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02); /* Bayangan lebih ringan */
-            max-width: 95%; 
-            width: 1400px; /* Diperluas sedikit */
-            margin: 0 auto;
-            overflow: hidden; 
-            border: 1px solid #e2e8f0; 
-        }
-        
-        /* Table Styles - Fokus pada kebersihan */
-        th, td {
-            padding: 14px 16px; /* Padding lebih lebar untuk kesan modern */
-            text-align: left;
-            border-right: 1px solid #f1f5f9; 
-            border-bottom: 1px solid #f1f5f9; 
-            overflow: hidden;
-            vertical-align: middle; /* Tengah vertikal */
+        /* Style untuk dropzone */
+        .dropzone {
+            min-height: 100px;
+            padding: 10px;
+            border: 2px dashed #9ca3af;
+            background-color: #f9fafb;
             transition: background-color 0.2s;
-            white-space: nowrap; /* Menjaga sel hari tetap dalam satu baris */
         }
-
-        /* Hover pada sel hari */
-        td:not(:first-child):hover {
-            background-color: #f8fafc; 
-        }
-
-        /* Kolom untuk Shift/Waktu */
-        th:first-child, td:first-child {
-            width: 15%; 
-            font-weight: 600;
-            background-color: #f8fafc; 
-            border-right: 2px solid #e2e8f0; 
-            position: sticky; /* Sticky untuk kolom pertama */
-            left: 0;
-            z-index: 20; 
-            white-space: normal; /* Biarkan shift/waktu membungkus */
-        }
-        
-        /* Style untuk Header Kolom (Hari) */
-        th {
-            background-color: #ecfeff; /* Cyan-50 */
-            color: #0e7490; /* Cyan-700 */
-            font-weight: 700;
-            border-top: 3px solid #06b6d4; /* Aksen garis lebih tipis */
-            position: sticky; 
-            top: 0;
-            z-index: 30; /* Lebih tinggi dari kolom pertama */
-            text-align: center !important; /* Hari di tengah */
-        }
-        
-        /* Menghilangkan border pada kolom dan baris terakhir */
-        th:last-child, td:last-child {
-            border-right: none;
-        }
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        /* NEW DIVIDER STYLES (Dipertahankan, sedikit lebih lembut) */
-        .divider-row td {
-            height: 30px;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: white;
-            text-align: center !important;
-            font-size: 0.85rem;
-            padding: 6px;
-            border-right: none;
-            border-bottom: none;
-            cursor: default;
-        }
-        .divider-harian td {
-            background-color: #06b6d4; /* Cyan-500 */
-            color: #fff;
-        }
-        .divider-pembina td {
-            background-color: #0e7490; /* Cyan-700 */
-            color: #fff;
-        }
-        /* END NEW DIVIDER STYLES */
-        
-        /* Shift Badges */
-        .shift-badge-pagi {
-            background-color: #e0f7f2; /* Hijau Mint-Cyan Soft */
-            color: #0e9076; /* Hijau Tua/Teal */
-        }
-        .shift-badge-malam {
-            background-color: #ecf0ff; /* Biru Indigo Soft */
-            color: #4338ca; /* Indigo Tua */
-        }
-        .shift-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px; /* Lebih kecil */
-            font-size: 0.75rem; /* Lebih kecil */
-            font-weight: 700;
-            margin-bottom: 2px;
-            letter-spacing: 0.05em;
-        }
-        
-        /* Style untuk daftar pustakawan */
-        .librarian-text {
-             font-size: 0.9rem; 
-             line-height: 1.4;
-             color: #1f2937; /* Gray-900 */
-             white-space: normal; /* Biarkan konten cell membungkus */
-        }
-        /* Mengubah warna teks cell kosong */
-        .empty-cell {
-            color: #cbd5e1; /* Slate-300 - Sangat lembut */
-            font-style: italic;
-            font-size: 0.85rem;
-        }
-        
-        /* Judul Kartu - Header */
-        .card-header {
-            padding: 24px 24px;
-            border-bottom: 1px solid #e2e8f0;
-            background-color: white; 
-            display: flex;
-            justify-content: space-between; 
-            align-items: center;
-        }
-        
-        /* Logo Styling */
-        .logo {
-            height: 48px; 
-            width: auto;
-        }
-
-        /* Header Title Styling */
-        .header-title-group h1 {
-            font-size: 1.875rem; /* text-3xl */
-            font-weight: 800;
-            color: #1f2937;
-        }
-        .header-title-group {
-            text-align: right; 
-        }
-
-        /* Table Wrapper */
-        .table-wrapper {
-            width: 100%;
-            overflow-x: auto;
-        }
-        
-        /* ======================================= */
-        /* MEDIA PRINT STYLES (Print-Friendly) */
-        /* ======================================= */
-        @media print {
-            body { background-color: white !important; padding: 0 !important; font-size: 9pt; }
-            .container-card { width: 100% !important; max-width: none !important; box-shadow: none !important; border: none !important; }
-            .table-wrapper { overflow-x: visible !important; }
-            
-            /* Warna latar belakang dan teks untuk cetak */
-            .card-header, th, .divider-row td, .shift-badge {
-                -webkit-print-color-adjust: exact !important; 
-                print-color-adjust: exact !important;
-            }
-            .card-header, th:first-child, td:first-child { 
-                background-color: #f3f4f6 !important; /* Abu-abu ringan */
-            }
-            th {
-                background-color: #e5e7eb !important; 
-                color: #1f2937 !important;
-                border-top: 2px solid #06b6d4 !important; 
-            }
-            
-            /* Divider */
-            .divider-row td {
-                color: white !important;
-                background-color: #4b5563 !important; /* Abu-abu tua */
-            }
-
-            /* Badge */
-            .shift-badge {
-                border: 1px solid #94a3b8 !important;
-                background-color: white !important;
-                color: #1f2937 !important;
-            }
-            
-            /* General Table Styles */
-            th, td {
-                border-color: #d1d5db !important;
-                padding: 8px 10px !important; 
-            }
-            
+        .dropzone.drag-over {
+            background-color: #eef2ff; /* blue-50 */
+            border-color: #3b82f6;
         }
     </style>
 </head>
 <body>
 
-    <div class="container-card">
-        <div class="card-header">
-             <img src="logo.png" alt="Logo Organisasi" class="logo">
-             
-             <div class="header-title-group">
-                 <h1 class="font-extrabold">Jadwal Piket Pustakawan Mingguan</h1>
-                 </div>
-        </div>
-        <div id="schedule-table-container" class="table-wrapper">
-            <div id="loading-indicator" class="text-center py-20 text-gray-500 text-xl font-medium">Memuat Jadwal...</div>
+    <div id="app-container" class="min-h-screen p-4 sm:p-8 flex flex-col">
+
+        <header class="flex justify-between items-center mb-6 p-4 bg-white rounded-xl shadow-lg">
+            <h1 class="text-2xl font-bold text-gray-800">Manajemen Sistem Absensi</h1>
+            <nav>
+                <a href="index.html" class="px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-blue-600 text-white hover:bg-blue-700 shadow-md">
+                    Kembali ke Absensi
+                </a>
+            </nav>
+        </header>
+
+        <main class="container-card flex-grow">
+            <div class="bg-white p-6 rounded-xl shadow-2xl">
+                <div class="flex border-b mb-6">
+                    <button id="tab-rekap" onclick="switchTab('rekap')" class="tab-active py-3 px-4 text-sm font-medium rounded-t-lg transition-colors">
+                        Rekap Absensi
+                    </button>
+                    <button id="tab-librarian" onclick="switchTab('librarian')" class="tab-inactive py-3 px-4 text-sm font-medium rounded-t-lg transition-colors">
+                        Manajemen Pustakawan
+                    </button>
+                    <button id="tab-schedule" onclick="switchTab('schedule')" class="tab-inactive py-3 px-4 text-sm font-medium rounded-t-lg transition-colors">
+                        Atur Jadwal
+                    </button>
+                </div>
+
+                <div id="tab-content">
+                    </div>
+            </div>
+        </main>
+        
+        <footer class="w-full container-card mt-8 text-center text-sm text-gray-500 p-4">
+            &copy; 2025 Sistem Absensi Pustakawan. Start at 17 Nov 2025.
+        </footer>
+        <div id="loading-indicator" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden z-50">
+            <div class="p-4 bg-white rounded-lg shadow-xl flex items-center">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-gray-700">Memuat data...</span>
+            </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+        import { getDatabase, ref, get, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
         // =================================================================
-        // KONFIGURASI FIREBASE (HARUS SAMA DENGAN FILE LAIN)
+        // KONFIGURASI FIREBASE (HARUS SAMA DENGAN INDEX.HTML)
         // =================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyBb-hbcc_ZE2hH6dlc81HbIGMQi96y4qYI",
@@ -254,178 +106,726 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Hari diurutkan dari Senin hingga Ahad untuk kolom horizontal
-        const ALL_DAYS_OF_WEEK = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Ahad'];
+        let dbInstance = db;
+        let currentTab = 'rekap';
+        let allLibrarians = []; 
+        let unsubscribeLibrarians = null; 
         
-        // Semua shift yang relevan
-        const ALL_SHIFTS = [
-            { key: 'pagi', name: 'Pagi', time: '08:00 - 11:00', badgeClass: 'shift-badge-pagi' },
-            { key: 'malam', name: 'Malam', time: '21:00 - 22:30', badgeClass: 'shift-badge-malam' }
-        ];
+        // Konstanta Jadwal
+        const SHIFT_PAGI = 'Pagi (08:00 - 11:00)';
+        const SHIFT_MALAM = 'Malam (21:00 - 22:30)';
+        const contentArea = document.getElementById('tab-content');
+        
+        // Array Hari dalam Seminggu
+        const DAYS_OF_WEEK = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
-        /**
-         * Mengambil data jadwal mingguan dan merendernya ke tabel horizontal.
-         */
-        async function loadAndRenderSchedule() {
-            const container = document.getElementById('schedule-table-container');
+        // State untuk Manajemen Jadwal Berulang
+        let currentEditingDay = DAYS_OF_WEEK[0]; 
+        let currentScheduleTemplate = {}; 
+
+
+        // --- UTILITY FUNCTIONS (NO CHANGE) ---
+        function setLoading(show) {
+            document.getElementById('loading-indicator').classList.toggle('hidden', !show);
+        }
+
+        function formatDateToKey(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function getSundayOfWeek(dateKey) {
+            const [year, month, day] = dateKey.split('-').map(Number);
+            const date = new Date(year, month - 1, day); 
+            const dayOfWeek = date.getDay(); 
+            date.setDate(date.getDate() - dayOfWeek); 
+            return formatDateToKey(date); 
+        }
+
+        function formatWeekRange(sundayDateKey) {
+            const [year, month, day] = sundayDateKey.split('-').map(Number);
+            const sundayDate = new Date(year, month - 1, day); 
+            const saturdayDate = new Date(sundayDate);
+            saturdayDate.setDate(sundayDate.getDate() + 6);
+            const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+            const sundayFormatted = sundayDate.toLocaleDateString('id-ID', dateOptions);
+            const saturdayFormatted = saturdayDate.toLocaleDateString('id-ID', dateOptions);
+            return `Ahad ${sundayFormatted} - Sabtu ${saturdayFormatted}`;
+        }
+        
+        function renderMessage(type, message) {
+            let color = '';
+            if (type === 'success') color = 'bg-green-100 text-green-700 border-green-500';
+            else if (type === 'error') color = 'bg-red-100 text-red-700 border-red-500';
+            else color = 'bg-blue-100 text-blue-700 border-blue-500';
+            
+            return `<div class="p-3 mb-4 border-l-4 rounded-lg ${color}">${message}</div>`;
+        }
+        
+        // --- CRUD Pustakawan (Librarian Management Logic - NO CHANGE) ---
+
+        // Fungsi untuk menambahkan/mengubah pustakawan (GLOBAL)
+        window.saveLibrarian = async (event) => {
+            event.preventDefault();
+            setLoading(true);
+            contentArea.querySelectorAll('.p-3.mb-4').forEach(el => el.remove()); 
+            
+            const name = document.getElementById('librarian-name').value.trim();
+            const id = document.getElementById('librarian-id').value.trim();
+            const existingKey = document.getElementById('librarian-key').value;
+            const keyPath = existingKey ? `librarians/${existingKey}` : 'librarians';
+
+            if (!name || !id) {
+                contentArea.insertAdjacentHTML('afterbegin', renderMessage('error', 'Nama dan ID Pustakawan harus diisi.'));
+                setLoading(false);
+                return;
+            }
+            
+            if (!existingKey && allLibrarians.some(lib => lib.id === id)) {
+                contentArea.insertAdjacentHTML('afterbegin', renderMessage('error', `ID ${id} sudah digunakan oleh pustakawan lain. Harap gunakan ID unik.`));
+                setLoading(false);
+                return;
+            }
 
             try {
-                const scheduleRef = ref(db, 'recurring_templates');
-                const snapshot = await get(scheduleRef);
-                const weeklySchedule = snapshot.val() || {};
-
-                // 1. Tentukan Hari yang Aktif (ada piket)
-                const activeDays = getActiveDays(weeklySchedule);
-
-                if (activeDays.length === 0) {
-                     container.innerHTML = `
-                        <div class="text-center py-20 text-gray-700 text-xl font-medium">
-                            <h3 class="font-bold mb-2">Jadwal Kosong</h3>
-                            </div>
-                    `;
-                    return;
+                const data = { name: name, id: id };
+                if (existingKey) {
+                    await update(ref(dbInstance, keyPath), data);
+                    contentArea.insertAdjacentHTML('afterbegin', renderMessage('success', 'Pustakawan berhasil diperbarui!'));
+                } else {
+                    const newRef = push(ref(dbInstance, keyPath));
+                    await set(newRef, data);
+                    contentArea.insertAdjacentHTML('afterbegin', renderMessage('success', 'Pustakawan baru berhasil ditambahkan!'));
                 }
+                document.getElementById('librarian-form').reset();
+                document.getElementById('librarian-key').value = '';
+                document.getElementById('form-title').textContent = 'Tambah Pustakawan Baru';
+            } catch (e) {
+                console.error("Gagal menyimpan pustakawan:", e);
+                contentArea.insertAdjacentHTML('afterbegin', renderMessage('error', `Gagal menyimpan data: ${e.message}`));
+            } finally {
+                setLoading(false);
+            }
+        };
 
-                renderHorizontalTable(weeklySchedule, container, activeDays);
+        // Fungsi untuk mengisi form edit (GLOBAL)
+        window.editLibrarian = (key, name, id) => {
+            document.getElementById('librarian-key').value = key;
+            document.getElementById('librarian-name').value = name;
+            document.getElementById('librarian-id').value = id;
+            document.getElementById('form-title').textContent = 'Edit Pustakawan';
+        };
+
+        // Fungsi untuk menghapus pustakawan (GLOBAL)
+        window.deleteLibrarian = async (key, name) => {
+            if (!confirm(`Yakin ingin menghapus pustakawan ${name}? Aksi ini tidak dapat dibatalkan dan akan menghapus semua referensi dari template jadwal berulang.`)) return; 
+
+            setLoading(true);
+            try {
+                // 1. Hapus entri pustakawan
+                await remove(ref(dbInstance, `librarians/${key}`));
+
+                // 2. Hapus referensi dari template jadwal berulang
+                const templatesRef = ref(dbInstance, 'recurring_templates');
+                const templateSnapshot = await get(templatesRef);
+
+                if (templateSnapshot.exists()) {
+                    const updates = {};
+                    const templates = templateSnapshot.val();
+                    // Cari ID pustakawan dari key sebelum dihapus
+                    const librarianIdToDelete = allLibrarians.find(lib => lib.key === key)?.id; 
+
+                    for (const day in templates) {
+                        const template = templates[day];
+                        let updated = false;
+
+                        // Filter Shift Pagi
+                        const newPagi = (template.pagi || []).filter(lib => lib.librarianId !== librarianIdToDelete);
+                        if (newPagi.length !== (template.pagi || []).length) {
+                            updates[`recurring_templates/${day}/pagi`] = newPagi;
+                            updated = true;
+                        }
+
+                        // Filter Shift Malam
+                        const newMalam = (template.malam || []).filter(lib => lib.librarianId !== librarianIdToDelete);
+                        if (newMalam.length !== (template.malam || []).length) {
+                            updates[`recurring_templates/${day}/malam`] = newMalam;
+                            updated = true;
+                        }
+                    }
+
+                    if (Object.keys(updates).length > 0) {
+                        await update(ref(dbInstance, '/'), updates);
+                        console.log("Referensi pustakawan dihapus dari template jadwal berulang.");
+                    }
+                }
+                
+                contentArea.insertAdjacentHTML('afterbegin', renderMessage('success', `${name} berhasil dihapus. Template jadwal telah diperbarui.`));
 
             } catch (e) {
-                console.error("Gagal memuat jadwal:", e);
-                container.innerHTML = `
-                    <div class="text-center py-20 text-red-500 text-xl font-medium">
-                        Error: Gagal memuat data jadwal. Cek koneksi Firebase.
+                console.error("Gagal menghapus pustakawan:", e);
+                contentArea.insertAdjacentHTML('afterbegin', renderMessage('error', `Gagal menghapus: ${e.message}`));
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        // Render Librarian Management Tab
+        function renderLibrarianManagement() {
+            contentArea.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-1 p-5 border border-blue-200 rounded-xl bg-blue-50 h-fit">
+                        <h3 id="form-title" class="text-xl font-bold text-blue-700 mb-4">Tambah Pustakawan Baru</h3>
+                        <form id="librarian-form" onsubmit="saveLibrarian(event)">
+                            <input type="hidden" id="librarian-key">
+                            <div class="mb-4">
+                                <label for="librarian-name" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                                <input type="text" id="librarian-name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                            <div class="mb-4">
+                                <label for="librarian-id" class="block text-sm font-medium text-gray-700">ID Pustakawan (Contoh: LIB001)</label>
+                                <input type="text" id="librarian-id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                            <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition duration-150">
+                                Simpan Pustakawan
+                            </button>
+                        </form>
                     </div>
-                `;
-            }
-        }
 
-        /**
-         * Menentukan hari-hari mana saja yang memiliki data piket.
-         * @param {object} weeklySchedule - Data jadwal dari Firebase.
-         * @returns {string[]} Array hari yang aktif, sesuai urutan.
-         */
-        function getActiveDays(weeklySchedule) {
-            const activeDays = ALL_DAYS_OF_WEEK.filter(day => {
-                const daySchedule = weeklySchedule[day];
-                if (!daySchedule) return false;
-                
-                // Cek apakah ada pustakawan di shift pagi ATAU malam
-                const hasPagi = (daySchedule.pagi || []).length > 0;
-                const hasMalam = (daySchedule.malam || []).length > 0;
-                
-                return hasPagi || hasMalam;
-            });
-            return activeDays;
-        }
-
-
-        /**
-         * Membuat HTML untuk satu baris shift (Pagi atau Malam).
-         */
-        function renderShiftRow(shiftInfo, weeklySchedule, activeDays) {
-            const shiftKey = shiftInfo.key;
-            let rowHtml = '<tr>';
-            
-            // First cell: Shift Name and Time (STIKY COLUMN)
-            rowHtml += `
-                <td>
-                    <span class="shift-badge ${shiftInfo.badgeClass}">${shiftInfo.name}</span>
-                    <div class="text-xs text-gray-500 mt-1">${shiftInfo.time}</div>
-                </td>
+                    <div class="lg:col-span-2 p-5 bg-white rounded-xl shadow-md border">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Daftar Pustakawan Aktif (${allLibrarians.length})</h3>
+                        <div id="librarian-list" class="space-y-3">
+                            ${allLibrarians.length === 0 ? '<p class="text-gray-500 italic">Belum ada pustakawan yang terdaftar.</p>' : allLibrarians.map(lib => `
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg shadow-sm border">
+                                    <div class="flex-grow">
+                                        <p class="font-semibold">${lib.name}</p>
+                                        <p class="text-xs text-gray-500">ID: ${lib.id}</p>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button onclick="editLibrarian('${lib.key}', '${lib.name}', '${lib.id}')" class="p-2 text-blue-500 hover:text-blue-700 transition" title="Edit">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zm-1.414 7.07l-4 4V17h3l4-4-3-3zm-6.172-1.879l5.05-5.05 2.828 2.828-5.05 5.05-2.828-2.828zM17 18H3V6a2 2 0 012-2h4a1 1 0 000-2H5a4 4 0 00-4 4v12a4 4 0 004 4h12a4 4 0 004-4v-4a1 1 0 00-2 0v4a2 2 0 01-2 2z"/></svg>
+                                        </button>
+                                        <button onclick="deleteLibrarian('${lib.key}', '${lib.name}')" class="p-2 text-red-500 hover:text-red-700 transition" title="Hapus">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" /><path d="M10 2a1 1 0 00-1 1v1h2V3a1 1 0 00-1-1zM5 6a1 1 0 000 2h10a1 1 0 100-2H5zM4 10a1 1 0 000 2h12a1 1 0 100-2H4z"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
             `;
+        }
+        
+        // --- Drag and Drop Handlers (GLOBAL - NO CHANGE) ---
+        window.dragStart = (event) => {
+            event.dataTransfer.setData('text/plain', event.target.dataset.librarianId);
+            event.dataTransfer.effectAllowed = 'move';
+            event.target.classList.add('opacity-50'); 
+        };
+
+        window.dragEnd = (event) => {
+            event.target.classList.remove('opacity-50');
+        };
+
+        window.dragOver = (event) => {
+            event.preventDefault(); 
+            event.dataTransfer.dropEffect = 'move';
+            if (event.target.closest('.dropzone')) {
+                 event.target.closest('.dropzone').classList.add('drag-over');
+            }
+        };
+
+        window.dragLeave = (event) => {
+             if (event.target.classList.contains('dropzone')) {
+                event.target.classList.remove('drag-over');
+             }
+        };
+
+        window.handleDrop = (event, targetShift) => {
+            event.preventDefault();
+            event.target.closest('.dropzone').classList.remove('drag-over'); 
+            const librarianId = event.dataTransfer.getData('text/plain');
+            assignLibrarian(librarianId, targetShift);
+        };
+        
+        window.removeAssignment = (librarianId, shift) => {
+            removeLibrarian(librarianId, shift);
+        }
+        
+        function assignLibrarian(librarianId, shift) {
+            let currentShiftList = currentScheduleTemplate[shift] || [];
+            const librarian = allLibrarians.find(l => l.id === librarianId);
+            if (!librarian) return;
+
+            const indexInCurrent = currentShiftList.findIndex(l => l.librarianId === librarianId);
             
-            // Other cells: Librarians for each active day
-            activeDays.forEach(day => {
-                const daySchedule = weeklySchedule[day] || {};
-                const librarians = daySchedule[shiftKey] || [];
+            if (indexInCurrent === -1) { 
+                if (!currentScheduleTemplate[shift]) currentScheduleTemplate[shift] = []; 
                 
-                rowHtml += `<td>`;
-                if (librarians.length > 0) {
-                    // 1. Urutkan nama untuk tampilan yang rapi
-                    librarians.sort((a,b) => a.name.localeCompare(b.name));
-                    
-                    // 2. Gabungkan semua nama menjadi satu string, dipisahkan koma
-                    const librarianNames = librarians.map(lib => lib.name).join(', ');
-                    
-                    rowHtml += `<div class="librarian-text">${librarianNames}</div>`;
-                } else {
-                    rowHtml += `<span class="empty-cell">—</span>`; // Simbol dash untuk kosong
+                currentScheduleTemplate[shift].push({ 
+                    librarianId: librarian.id, 
+                    name: librarian.name, 
+                    status: 'Alpha', 
+                    checkIn: null,        
+                    absentBy: 'System' 
+                });
+                
+                currentScheduleTemplate[shift].sort((a,b) => a.name.localeCompare(b.name));
+                
+                updateAssignmentPanelUI(); 
+                
+                const saveReminderMsg = document.getElementById('save-reminder-msg');
+                if (!saveReminderMsg) {
+                    const panel = document.getElementById('schedule-assignment-panel');
+                    panel.insertAdjacentHTML('afterbegin', '<div id="save-reminder-msg" class="p-3 mb-4 border-l-4 border-yellow-500 bg-yellow-100 text-yellow-800 rounded-lg">Template jadwal telah diubah. Jangan lupa klik tombol "Simpan Template Jadwal" di bawah.</div>');
                 }
-                rowHtml += `</td>`;
-            });
-            
-            rowHtml += '</tr>';
-            return rowHtml;
+            }
         }
 
-        /**
-         * Membuat HTML untuk baris pembatas (Harian atau Pembina).
-         */
-        function createDividerRow(label, className, totalColumns) {
-             // Menggunakan totalColumns yang dinamis
-             return `
-                <tr class="divider-row ${className}">
-                    <td colspan="${totalColumns}">${label}</td>
-                </tr>
+        function removeLibrarian(librarianId, shift) {
+            let currentShiftList = currentScheduleTemplate[shift] || [];
+            
+            currentScheduleTemplate[shift] = currentShiftList.filter(l => l.librarianId !== librarianId);
+            
+            currentScheduleTemplate[shift].sort((a,b) => a.name.localeCompare(b.name));
+
+            updateAssignmentPanelUI();
+            
+            const saveReminderMsg = document.getElementById('save-reminder-msg');
+            if (!saveReminderMsg) {
+                const panel = document.getElementById('schedule-assignment-panel');
+                panel.insertAdjacentHTML('afterbegin', '<div id="save-reminder-msg" class="p-3 mb-4 border-l-4 border-yellow-500 bg-yellow-100 text-yellow-800 rounded-lg">Template jadwal telah diubah. Jangan lupa klik tombol "Simpan Template Jadwal" di bawah.</div>');
+            }
+        }
+
+
+        // --- Recurring Schedule Management Logic (NO CHANGE) ---
+
+        window.switchDayTab = (dayName) => {
+            currentEditingDay = dayName;
+            
+            document.querySelectorAll('#day-tabs button').forEach(btn => {
+                if (btn.getAttribute('data-day') === dayName) {
+                    btn.classList.replace('bg-white', 'bg-purple-600');
+                    btn.classList.replace('text-purple-600', 'text-white');
+                    btn.classList.add('shadow-md');
+                } else {
+                    btn.classList.replace('bg-purple-600', 'bg-white');
+                    btn.classList.replace('text-white', 'text-purple-600');
+                    btn.classList.remove('shadow-md');
+                    btn.classList.add('hover:bg-purple-100');
+                }
+            });
+
+            const currentDayDisplay = document.getElementById('current-day-display');
+            const saveDayDisplay = document.getElementById('schedule-save-day-display');
+            if(currentDayDisplay) currentDayDisplay.textContent = dayName;
+            if(saveDayDisplay) saveDayDisplay.textContent = dayName;
+
+            loadScheduleTemplateForDay(dayName);
+        }
+
+        async function loadScheduleTemplateForDay(dayName) {
+            setLoading(true);
+            const saveReminderMsg = document.getElementById('save-reminder-msg');
+            if (saveReminderMsg) saveReminderMsg.remove(); 
+            
+            const schedulePath = `recurring_templates/${dayName}`;
+
+            try {
+                const snapshot = await get(ref(dbInstance, schedulePath));
+                currentScheduleTemplate = snapshot.val() || { day: dayName, pagi: [], malam: [] };
+                
+                updateAssignmentPanelUI();
+
+            } catch(e) {
+                console.error("Gagal memuat template jadwal:", e);
+                currentScheduleTemplate = { day: dayName, pagi: [], malam: [] };
+                updateAssignmentPanelUI(); 
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function updateAssignmentPanelUI() {
+            const allLibrariansSource = allLibrarians; 
+            
+            const assignedIds = new Set([
+                ...(currentScheduleTemplate.pagi || []).map(l => l.librarianId),
+                ...(currentScheduleTemplate.malam || []).map(l => l.librarianId)
+            ]);
+            
+            const librarianSourcePanel = document.getElementById('librarian-source-list');
+            
+            if (librarianSourcePanel) {
+                librarianSourcePanel.innerHTML = allLibrariansSource.length === 0 
+                    ? '<p class="text-gray-500 italic p-3">Belum ada pustakawan yang terdaftar.</p>'
+                    : allLibrariansSource.map(lib => {
+                        const isAssigned = assignedIds.has(lib.id);
+                        
+                        return `
+                        <div id="lib-source-${lib.id}" data-librarian-id="${lib.id}" draggable="true" 
+                             ondragstart="dragStart(event)" ondragend="dragEnd(event)"
+                             class="draggable-librarian p-3 bg-white border rounded-lg shadow-sm hover:bg-gray-50 transition duration-150 mb-2 
+                             ${isAssigned ? 'border-purple-500' : 'border-gray-200'}">
+                            <span class="font-medium text-gray-800">${lib.name}</span>
+                            <span class="text-xs text-gray-500 ml-2">${lib.id} ${isAssigned ? ' (Terjadwal)' : ''}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            const pagiDropzone = document.getElementById('pagi-dropzone');
+            if (pagiDropzone) {
+                const pagiLibrarians = currentScheduleTemplate.pagi || [];
+                pagiDropzone.innerHTML = pagiLibrarians.length === 0 
+                    ? '<p class="text-gray-400 italic text-center py-4">Seret & Lepaskan Pustakawan untuk Shift Pagi di sini.</p>'
+                    : pagiLibrarians.map(lib => `
+                        <div class="flex items-center justify-between p-2 bg-purple-100 border border-purple-300 rounded-md mb-2">
+                            <span>${lib.name} (${lib.librarianId})</span>
+                            <button onclick="removeAssignment('${lib.librarianId}', 'pagi')" class="text-red-500 hover:text-red-700 transition" title="Hapus dari shift">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                    `).join('');
+            }
+
+            const malamDropzone = document.getElementById('malam-dropzone');
+            if (malamDropzone) {
+                const malamLibrarians = currentScheduleTemplate.malam || [];
+                malamDropzone.innerHTML = malamLibrarians.length === 0 
+                    ? '<p class="text-gray-400 italic text-center py-4">Seret & Lepaskan Pustakawan untuk Shift Malam di sini.</p>'
+                    : malamLibrarians.map(lib => `
+                        <div class="flex items-center justify-between p-2 bg-purple-100 border border-purple-300 rounded-md mb-2">
+                            <span>${lib.name} (${lib.librarianId})</span>
+                            <button onclick="removeAssignment('${lib.librarianId}', 'malam')" class="text-red-500 hover:text-red-700 transition" title="Hapus dari shift">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                    `).join('');
+            }
+        }
+        
+
+        window.saveRecurringSchedule = async () => {
+            setLoading(true);
+            contentArea.querySelectorAll('.p-3.mb-4').forEach(el => el.remove()); 
+            
+            const selectedDay = currentEditingDay;
+            const saveReminderMsg = document.getElementById('save-reminder-msg');
+            if (saveReminderMsg) saveReminderMsg.remove(); 
+
+            const schedulePath = `recurring_templates/${selectedDay}`;
+            
+            try {
+                await set(ref(dbInstance, schedulePath), currentScheduleTemplate);
+                contentArea.insertAdjacentHTML('afterbegin', renderMessage('success', `Template Jadwal Hari ${selectedDay} berhasil diperbarui!`));
+            } catch (e) {
+                console.error("Gagal menyimpan template jadwal:", e);
+                contentArea.insertAdjacentHTML('afterbegin', renderMessage('error', `Gagal menyimpan template: ${e.message}`));
+            } finally {
+                setLoading(false);
+            }
+        };
+
+
+        function renderScheduleManagement() {
+            contentArea.innerHTML = `
+                <div class="p-5 border border-purple-200 rounded-xl bg-purple-50">
+                    <h3 class="text-xl font-bold text-purple-700 mb-4">Atur Template Jadwal</h3>
+                    
+                    <p class="text-sm text-gray-600 mb-4">Pilih Hari, lalu **Seret & Lepaskan** nama pustakawan dari panel kanan ke kotak shift **Pagi** atau **Malam** di panel jadwal. Satu pustakawan dapat memiliki dua shift (Pagi dan Malam) pada hari yang sama.</p>
+                    
+                    <div id="day-tabs" class="flex flex-wrap gap-2 mb-6 border-b border-purple-200 pb-3">
+                        ${DAYS_OF_WEEK.map((day, index) => `
+                            <button onclick="switchDayTab('${day}')" data-day="${day}" 
+                                class="py-2 px-4 text-sm font-medium rounded-lg transition-colors border border-purple-300 
+                                ${index === 0 ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-purple-600 hover:bg-purple-100'}">
+                                ${day}
+                            </button>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md border" id="schedule-assignment-panel">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Jadwal Hari <span id="current-day-display" class="text-purple-600">${DAYS_OF_WEEK[0]}</span></h4>
+                            
+                            ${allLibrarians.length === 0 ? 
+                                '<p class="text-gray-500 italic">Tambahkan pustakawan di tab "Manajemen Pustakawan" terlebih dahulu.</p>' :
+                                `
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                    <div class="p-4 border border-green-300 bg-green-50 rounded-lg">
+                                        <p class="font-bold text-green-700 mb-2">Shift Pagi</p>
+                                        <p class="text-xs text-green-600 mb-2">${SHIFT_PAGI}</p>
+                                        <div id="pagi-dropzone" 
+                                             class="dropzone space-y-2 rounded-md transition-colors"
+                                             ondragover="dragOver(event)"
+                                             ondragleave="dragLeave(event)"
+                                             ondrop="handleDrop(event, 'pagi')">
+                                            </div>
+                                    </div>
+                                    
+                                    <div class="p-4 border border-yellow-300 bg-yellow-50 rounded-lg">
+                                        <p class="font-bold text-yellow-700 mb-2">Shift Malam</p>
+                                        <p class="text-xs text-yellow-600 mb-2">${SHIFT_MALAM}</p>
+                                        <div id="malam-dropzone" 
+                                             class="dropzone space-y-2 rounded-md transition-colors"
+                                             ondragover="dragOver(event)"
+                                             ondragleave="dragLeave(event)"
+                                             ondrop="handleDrop(event, 'malam')">
+                                            </div>
+                                    </div>
+                                </div>
+    
+                                <div class="mt-4">
+                                    <button onclick="saveRecurringSchedule()" 
+                                        class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 transition duration-150">
+                                        Simpan Template Jadwal Hari <span id="schedule-save-day-display">${DAYS_OF_WEEK[0]}</span>
+                                    </button>
+                                </div>
+                            `}
+                        </div>
+
+                        <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-md border h-fit">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Daftar Pustakawan</h4>
+                            <div id="librarian-source-list" class="flex flex-col space-y-3 max-h-96 overflow-y-auto pr-2">
+                                </div>
+                        </div>
+                    </div>
+
+                </div>
+            `;
+            
+            switchDayTab(currentEditingDay); 
+        }
+
+        // --- Rekap Absensi Logic ---
+
+        // FUNGSI deleteAllRecapData DIHAPUS
+
+        function generateReportText(summary) {
+            let report = `REKAP TOTAL ABSENSI PUSTAKAWAN\n`;
+            report += `Periode: Semua Waktu\n`;
+            report += `========================================\n`;
+            report += `\n`;
+            report += `Nama Pustakawan\tHadir\tIzin\tAlpha\tTidak di Absen\n`;
+            
+            summary.forEach(lib => {
+                report += `${lib.name}\t${lib.Hadir}\t${lib.Izin}\t${lib.Alpha}\t${lib['Belum Absen'] || 0}\n`;
+            });
+            
+            report += `\n(Laporan ini dibuat otomatis)`;
+
+            return report;
+        }
+
+        window.copyTotalReport = async (reportTextEncoded) => {
+            const reportText = decodeURIComponent(reportTextEncoded);
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(reportText);
+                    alert('Laporan berhasil disalin ke clipboard!');
+                } else {
+                    const tempTextArea = document.createElement('textarea');
+                    tempTextArea.value = reportText;
+                    document.body.appendChild(tempTextArea);
+                    tempTextArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempTextArea);
+                    alert('Laporan berhasil disalin ke clipboard (Metode Fallback)!');
+                }
+            } catch (err) {
+                console.error('Gagal menyalin laporan:', err);
+                alert('Gagal menyalin laporan. Pastikan Anda menggunakan browser modern dan izin clipboard diberikan.');
+            }
+        };
+        
+        function calculateTotalRecap(records) {
+            const totalSummary = {}; 
+            
+            allLibrarians.forEach(lib => {
+                totalSummary[lib.id] = { 
+                    name: lib.name, 
+                    Hadir: 0, 
+                    Izin: 0, 
+                    Alpha: 0,
+                    'Belum Absen': 0
+                };
+            });
+
+
+            records.forEach(record => {
+                const allLibrariansInRecord = [...(record.pagi || []), ...(record.malam || [])];
+                
+                allLibrariansInRecord.forEach(lib => {
+                    const id = lib.librarianId;
+                    const status = lib.status || 'Belum Absen'; 
+                    
+                    if (totalSummary[id] && totalSummary[id].hasOwnProperty(status)) {
+                        totalSummary[id][status]++;
+                    } else if (!totalSummary[id]) {
+                         if (!totalSummary[id]) {
+                            totalSummary[id] = { name: lib.name, Hadir: 0, Izin: 0, Alpha: 0, 'Belum Absen': 0 };
+                        }
+                        if (totalSummary[id].hasOwnProperty(status)) {
+                            totalSummary[id][status]++;
+                        }
+                    }
+                });
+            });
+            
+            return Object.values(totalSummary).sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+
+        function renderTotalRecap(totalSummary, startDate) {
+            const contentArea = document.getElementById('tab-content');
+            
+            const reportText = generateReportText(totalSummary);
+            const encodedReportText = encodeURIComponent(reportText);
+
+            contentArea.innerHTML = `
+                <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2">Rekap Total Absensi Pustakawan</h2>
+                
+                <div class="mb-8 p-6 bg-white rounded-xl shadow-2xl border border-gray-100">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 border-b pb-2">
+                        <h3 class="text-xl font-bold text-gray-700 mb-2 sm:mb-0">Total Keseluruhan (Semua Waktu)</h3>
+                        <div class="flex space-x-2 flex-wrap justify-end gap-2">
+                            <button onclick="copyTotalReport('${encodedReportText}')"
+                                class="flex items-center justify-center space-x-1 px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition shadow-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v2a2 2 0 01-2 2h-1M12 7v10m-3-3h6" />
+                                </svg>
+                                <span>Salin Laporan</span>
+                            </button>
+                            </div>
+                    </div>
+                    
+                    <div class="mb-4 text-sm text-gray-500">
+                        Data Absensi dimulai pada tanggal: <span class="font-semibold text-gray-700">${startDate}</span>
+                    </div>
+                    
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Pustakawan</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Hadir</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Izin</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Alpha</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Tidak di Absen</th> 
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${totalSummary.map(lib => `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${lib.name}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-bold ${lib.Hadir > 0 ? 'text-green-600' : 'text-gray-400'}">${lib.Hadir}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-bold ${lib.Izin > 0 ? 'text-yellow-600' : 'text-gray-400'}">${lib.Izin}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-bold ${lib.Alpha > 0 ? 'text-red-600' : 'text-gray-400'}">${lib.Alpha}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-bold ${lib['Belum Absen'] > 0 ? 'text-gray-600' : 'text-gray-400'}">${lib['Belum Absen']}</td> 
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             `;
         }
 
+        async function loadRekapView() {
+            setLoading(true);
+            contentArea.innerHTML = ''; 
 
-        /**
-         * Membangun dan menampilkan tabel jadwal mingguan secara horizontal.
-         */
-        function renderHorizontalTable(weeklySchedule, container, activeDays) {
-            
-            const TOTAL_COLUMNS = activeDays.length + 1; // Shift + Active Days
+            let startDate = 'Data Belum Tersedia'; 
 
-            // 1. Setup Header (Active Days as columns)
-            let headerHtml = '<th>Shift & Waktu</th>'; // First column for shift/time
-            activeDays.forEach(day => {
-                headerHtml += `<th class="text-center">${day}</th>`;
-            });
+            try {
+                const schedulesRef = ref(dbInstance, 'librarian_schedules');
+                const snapshot = await get(schedulesRef);
 
-            // 2. Setup Body 
-            let bodyHtml = '';
-            
-            // --- BAGIAN PAGI ---
-            const pagiShiftInfo = ALL_SHIFTS.find(s => s.key === 'pagi');
-            if (pagiShiftInfo) {
-                bodyHtml += renderShiftRow(pagiShiftInfo, weeklySchedule, activeDays);
+                const records = [];
+                if (snapshot.exists()) {
+                    const schedulesObject = snapshot.val();
+                    const dateKeys = Object.keys(schedulesObject).sort(); 
+                    
+                    if (dateKeys.length > 0) {
+                        const firstDateKey = dateKeys[0];
+                        const [year, month, day] = firstDateKey.split('-').map(Number);
+                        const firstDate = new Date(year, month - 1, day); 
+                        startDate = firstDate.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+                    }
+
+                    for (const dateKey in schedulesObject) { 
+                        records.push(schedulesObject[dateKey]); 
+                    }
+                }
+                
+                const totalSummary = calculateTotalRecap(records);
+                renderTotalRecap(totalSummary, startDate); 
+
+            } catch (e) {
+                console.error("Gagal memuat catatan rekapitulasi:", e);
+                contentArea.innerHTML = renderMessage('error', `Error: Gagal memuat data rekapitulasi. ${e.message}`);
+            } finally {
+                setLoading(false);
             }
-
-            // --- PEMBATAS 1: Harian & Pembina (SETELAH PAGI) ---
-            bodyHtml += createDividerRow('Harian', 'divider-harian', TOTAL_COLUMNS);
-            bodyHtml += createDividerRow('Pembina', 'divider-pembina', TOTAL_COLUMNS);
-
-
-            // --- BAGIAN MALAM ---
-            const malamShiftInfo = ALL_SHIFTS.find(s => s.key === 'malam');
-             if (malamShiftInfo) {
-                bodyHtml += renderShiftRow(malamShiftInfo, weeklySchedule, activeDays);
-            }
-
-            // --- PEMBATAS 2: Harian & Pembina (DI AKHIR) ---
-            bodyHtml += createDividerRow('Harian', 'divider-harian', TOTAL_COLUMNS);
-            bodyHtml += createDividerRow('Pembina', 'divider-pembina', TOTAL_COLUMNS);
-
-
-            // 3. Assemble the full table HTML
-            const fullTableHtml = `
-                <table class="w-full divide-y divide-gray-200" style="border-collapse: collapse;">
-                    <thead>
-                        <tr>${headerHtml}</tr>
-                    </thead>
-                    <tbody class="bg-white" id="schedule-tbody">
-                        ${bodyHtml}
-                    </tbody>
-                </table>
-            `;
-
-            container.innerHTML = fullTableHtml;
         }
 
+        // --- Tab Control and Data Loaders (NO CHANGE) ---
+        
+        window.switchTab = (newTab) => {
+            currentTab = newTab;
+            contentArea.querySelectorAll('.p-3.mb-4').forEach(el => el.remove()); 
+            
+            ['rekap', 'librarian', 'schedule'].forEach(tab => {
+                const btn = document.getElementById(`tab-${tab}`);
+                if (btn) {
+                    if (tab === newTab) {
+                        btn.classList.replace('tab-inactive', 'tab-active');
+                    } else {
+                        btn.classList.replace('tab-active', 'tab-inactive');
+                    }
+                }
+            });
+
+            if (newTab === 'rekap') {
+                loadRekapView();
+            } else if (newTab === 'librarian') {
+                renderLibrarianManagement(); 
+            } else if (newTab === 'schedule') {
+                renderScheduleManagement();
+            }
+        }
+        
+        function setupLibrarianListener() {
+            if (unsubscribeLibrarians) return; 
+
+            unsubscribeLibrarians = onValue(ref(dbInstance, 'librarians'), (snapshot) => {
+                const libsObj = snapshot.val();
+                allLibrarians = [];
+                if (libsObj) {
+                    for (const key in libsObj) {
+                        allLibrarians.push({ key: key, ...libsObj[key] });
+                    }
+                }
+                if (currentTab === 'librarian') {
+                    renderLibrarianManagement();
+                } else if (currentTab === 'schedule') {
+                    updateAssignmentPanelUI(); 
+                }
+            }, (error) => {
+                console.error("Error fetching librarians:", error);
+            });
+        }
+        
         // --- INIT APP ---
         window.onload = () => {
-             loadAndRenderSchedule();
+             setupLibrarianListener(); 
+             switchTab('rekap');
         };
     </script>
 </body>
