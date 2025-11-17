@@ -241,7 +241,27 @@
         if (!schedule) {
           const template = (await get(ref(db, `recurring_templates/${today.name}`))).val();
           if (template) {
-            schedule = { pagi: template.pagi || [], malam: template.malam || [] };
+            
+            // LOGIKA BARU UNTUK SET STATUS AWAL MENJADI 'Alpha'
+            const initialStatus = 'Alpha';
+            
+            // Fungsi untuk mengaplikasikan status awal pada setiap pustakawan di shift
+            const applyInitialStatus = (shiftList) => {
+                if (!Array.isArray(shiftList)) return [];
+                return shiftList.map(lib => ({
+                    ...lib,
+                    status: initialStatus,
+                    checkIn: null,        
+                    absentBy: initialStatus === 'Alpha' ? 'System' : null
+                }));
+            };
+            
+            // Membuat struktur schedule hari ini dari template dan menerapkan status awal
+            schedule = { 
+                pagi: applyInitialStatus(template.pagi || []), 
+                malam: applyInitialStatus(template.malam || []) 
+            };
+            
             await set(dailyRef, schedule);
           }
         }
